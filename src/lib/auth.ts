@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/login',
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: true,
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -20,32 +20,46 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Credenciales inválidas');
+        try {
+          console.log('🔐 Login attempt for:', credentials?.email);
+
+          if (!credentials?.email || !credentials?.password) {
+            console.log('❌ Missing credentials');
+            throw new Error('Credenciales inválidas');
+          }
+
+          console.log('🔍 Searching user in database...');
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          });
+
+          if (!user || !user.password) {
+            console.log('❌ User not found:', credentials.email);
+            throw new Error('Usuario no encontrado');
+          }
+
+          console.log('✅ User found:', user.email);
+          console.log('🔑 Verifying password...');
+          const isPasswordValid = await compare(credentials.password, user.password);
+
+          if (!isPasswordValid) {
+            console.log('❌ Invalid password for:', user.email);
+            throw new Error('Contraseña incorrecta');
+          }
+
+          console.log('✅ Login successful for:', user.email);
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error('❌ Auth error:', error);
+          throw error;
         }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        });
-
-        if (!user || !user.password) {
-          throw new Error('Usuario no encontrado');
-        }
-
-        const isPasswordValid = await compare(credentials.password, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error('Contraseña incorrecta');
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],
