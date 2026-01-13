@@ -303,9 +303,8 @@ export default function InventarioPage() {
   };
 
   const generateSKU = async () => {
-    const form = activeTab === 'SINGLE' ? singleCardForm : sealedProductForm;
     const baseName = activeTab === 'SINGLE'
-      ? form.cardName || 'CARD'
+      ? singleCardForm.cardName || 'CARD'
       : sealedProductForm.name || 'PRODUCT';
 
     // Crear prefijo basado en el tipo
