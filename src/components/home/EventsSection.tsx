@@ -102,7 +102,7 @@ export default function EventsSection() {
   }
 
   return (
-    <section className="section">
+    <section id="eventos" className="section">
       <div className="container-custom">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">

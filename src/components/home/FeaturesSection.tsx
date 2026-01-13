@@ -113,7 +113,7 @@ export default function FeaturesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="section bg-rola-darker">
+    <section id="porque-rola-cards" ref={sectionRef} className="section bg-rola-darker">
       <div className="container-custom">
         {/* Section Header */}
         <div className="text-center mb-16">

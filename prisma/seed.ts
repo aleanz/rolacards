@@ -163,15 +163,15 @@ async function main() {
 
   // Crear configuraciones de la tienda
   const storeSettings = [
-    { key: 'store_address', value: 'Calle Principal #123', type: 'STRING' },
-    { key: 'store_city', value: 'Ciudad de México', type: 'STRING' },
-    { key: 'store_state', value: 'CDMX', type: 'STRING' },
-    { key: 'store_mapsUrl', value: 'https://maps.google.com', type: 'STRING' },
-    { key: 'store_phone', value: '+52 123 456 7890', type: 'STRING' },
-    { key: 'store_whatsapp', value: '521234567890', type: 'STRING' },
-    { key: 'store_email', value: 'info@rolacards.com', type: 'STRING' },
-    { key: 'store_scheduleWeekday', value: '3PM - 9PM', type: 'STRING' },
-    { key: 'store_scheduleWeekend', value: '12PM - 9PM', type: 'STRING' },
+    { key: 'store_address', value: 'Calle Principal #123', type: 'STRING' as const },
+    { key: 'store_city', value: 'Ciudad de México', type: 'STRING' as const },
+    { key: 'store_state', value: 'CDMX', type: 'STRING' as const },
+    { key: 'store_mapsUrl', value: 'https://maps.google.com', type: 'STRING' as const },
+    { key: 'store_phone', value: '+52 123 456 7890', type: 'STRING' as const },
+    { key: 'store_whatsapp', value: '521234567890', type: 'STRING' as const },
+    { key: 'store_email', value: 'info@rolacards.com', type: 'STRING' as const },
+    { key: 'store_scheduleWeekday', value: '3PM - 9PM', type: 'STRING' as const },
+    { key: 'store_scheduleWeekend', value: '12PM - 9PM', type: 'STRING' as const },
   ];
 
   await Promise.all(

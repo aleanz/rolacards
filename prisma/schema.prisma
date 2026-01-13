@@ -124,7 +124,7 @@ model GalleryImage {
   order       Int       @default(0)
   published   Boolean   @default(true)
   createdAt   DateTime  @default(now())
-  
+
   @@index([category])
   @@index([order])
 }

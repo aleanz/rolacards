@@ -9,15 +9,21 @@ import {
   Mail,
   Clock,
   Facebook,
-  Instagram,
-  MessageCircle
+  Youtube,
+  MessageCircle,
+  Info,
+  Calendar,
+  Search,
+  ShoppingBag
 } from 'lucide-react';
 
 const quickLinks = [
-  { name: 'Eventos', href: '/eventos' },
-  { name: 'Noticias', href: '/noticias' },
+  { name: '¿Por qué Rola Cards?', href: '/#porque-rola-cards' },
+  { name: 'Eventos', href: '/#eventos' },
+  { name: 'Visítanos', href: '/#visitanos' },
+  { name: 'Buscador de Cartas', href: '/buscador-cartas' },
   { name: 'Catálogo', href: '/catalogo' },
-  { name: 'Galería', href: '/galeria' },
+  { name: 'Contáctanos', href: '/contacto' },
 ];
 
 interface StoreSettings {
@@ -80,8 +86,8 @@ export default function Footer() {
 
   const socialLinks = settings
     ? [
-        { name: 'Facebook', href: '#', icon: Facebook },
-        { name: 'Instagram', href: '#', icon: Instagram },
+        { name: 'Facebook', href: 'https://www.facebook.com/Rolacards', icon: Facebook },
+        { name: 'YouTube', href: 'https://www.youtube.com/@Rolatesta', icon: Youtube },
         { name: 'WhatsApp', href: `https://wa.me/${settings.whatsapp}`, icon: MessageCircle },
       ]
     : [];

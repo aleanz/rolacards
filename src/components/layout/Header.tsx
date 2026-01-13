@@ -8,19 +8,21 @@ import {
   Menu,
   X,
   Calendar,
-  Newspaper,
+  Search,
   ShoppingBag,
-  ImageIcon,
+  MapPin,
+  Mail,
   LogIn,
-  ChevronDown
+  Info
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Inicio', href: '/' },
-  { name: 'Eventos', href: '/eventos', icon: Calendar },
-  { name: 'Noticias', href: '/noticias', icon: Newspaper },
+  { name: '¿Por qué Rola Cards?', href: '/#porque-rola-cards', icon: Info },
+  { name: 'Eventos', href: '/#eventos', icon: Calendar },
+  { name: 'Visítanos', href: '/#visitanos', icon: MapPin },
+  { name: 'Buscador de Cartas', href: '/buscador-cartas', icon: Search },
   { name: 'Catálogo', href: '/catalogo', icon: ShoppingBag },
-  { name: 'Galería', href: '/galeria', icon: ImageIcon },
+  { name: 'Contáctanos', href: '/contacto', icon: Mail },
 ];
 
 export default function Header() {
@@ -65,13 +67,13 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation - Centered */}
-          <div className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center gap-0.5 absolute left-1/2 -translate-x-1/2">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  'px-2.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap',
                   'text-gray-300 hover:text-white hover:bg-rola-gray/50'
                 )}
               >

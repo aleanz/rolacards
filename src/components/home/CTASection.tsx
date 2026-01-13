@@ -86,7 +86,7 @@ export default function CTASection() {
   }
 
   return (
-    <section className="section relative overflow-hidden">
+    <section id="visitanos" className="section relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-rola-gold/10 via-rola-darker to-rola-purple/5" />
       <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-5" />
