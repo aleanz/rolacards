@@ -51,7 +51,7 @@ export async function generateSaleReceipt(
   let yPos = 20;
 
   // Header - Logo y nombre de la tienda
-  doc.setFillColor(...primaryColor);
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, 210, 40, 'F');
 
   doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
