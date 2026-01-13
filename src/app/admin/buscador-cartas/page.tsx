@@ -25,6 +25,17 @@ interface Card {
     ebay_price: string;
     amazon_price: string;
   }>;
+  card_sets?: Array<{
+    set_name: string;
+    set_code: string;
+    set_rarity: string;
+    set_price: string;
+  }>;
+  misc_info?: Array<{
+    tcg_date?: string;
+    ocg_date?: string;
+    formats?: string[];
+  }>;
 }
 
 const CARD_TYPES = [
@@ -131,7 +142,7 @@ export default function BuscadorCartasPage() {
     setIsLoading(true);
     try {
       let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
-      const params: string[] = [];
+      const params: string[] = ['misc=yes'];
 
       if (searchName) params.push(`fname=${encodeURIComponent(searchName)}`);
       if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
@@ -171,6 +182,29 @@ export default function BuscadorCartasPage() {
     if (e.key === 'Enter') {
       searchCards();
     }
+  };
+
+  const getRegionalAvailability = (card: Card) => {
+    const miscInfo = card.misc_info?.[0];
+
+    // Verificar por fechas de lanzamiento
+    const hasTCGDate = miscInfo?.tcg_date !== undefined;
+    const hasOCGDate = miscInfo?.ocg_date !== undefined;
+
+    // Verificar por el array de formatos
+    const formats = miscInfo?.formats || [];
+    const inTCGFormat = formats.includes('TCG');
+    const inOCGFormat = formats.includes('OCG');
+
+    // Una carta está en TCG si tiene fecha TCG O está en el formato TCG
+    const hasTCG = hasTCGDate || inTCGFormat;
+    const hasOCG = hasOCGDate || inOCGFormat;
+
+    return {
+      tcg: hasTCG,
+      ocg: hasOCG,
+      both: hasTCG && hasOCG,
+    };
   };
 
   return (
@@ -341,11 +375,32 @@ export default function BuscadorCartasPage() {
                 onClick={() => setSelectedCard(card)}
                 className="card p-3 cursor-pointer hover:border-rola-gold transition-all group"
               >
-                <img
-                  src={card.card_images[0].image_url_small}
-                  alt={card.name}
-                  className="w-full rounded-lg mb-2 group-hover:scale-105 transition-transform"
-                />
+                <div className="relative">
+                  <img
+                    src={card.card_images[0].image_url_small}
+                    alt={card.name}
+                    className="w-full rounded-lg mb-2 group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {(() => {
+                      const availability = getRegionalAvailability(card);
+                      return (
+                        <>
+                          {availability.tcg && (
+                            <span className="px-2 py-0.5 bg-blue-500/90 text-white text-[10px] font-bold rounded">
+                              TCG
+                            </span>
+                          )}
+                          {availability.ocg && (
+                            <span className="px-2 py-0.5 bg-red-500/90 text-white text-[10px] font-bold rounded">
+                              OCG
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
                 <h3 className="text-white text-sm font-medium truncate">{card.name}</h3>
                 <p className="text-gray-500 text-xs truncate">{card.type}</p>
               </div>
@@ -370,9 +425,30 @@ export default function BuscadorCartasPage() {
           <div className="min-h-screen flex items-center justify-center p-4">
             <div className="card p-6 max-w-4xl w-full my-8">
               <div className="flex items-start justify-between mb-6">
-                <h2 className="font-display text-2xl font-bold text-white">
-                  {selectedCard.name}
-                </h2>
+                <div className="flex-1">
+                  <h2 className="font-display text-2xl font-bold text-white mb-2">
+                    {selectedCard.name}
+                  </h2>
+                  <div className="flex gap-2">
+                    {(() => {
+                      const availability = getRegionalAvailability(selectedCard);
+                      return (
+                        <>
+                          {availability.tcg && (
+                            <span className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded">
+                              TCG
+                            </span>
+                          )}
+                          {availability.ocg && (
+                            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded">
+                              OCG
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
                 <button
                   onClick={() => setSelectedCard(null)}
                   className="text-gray-400 hover:text-white transition-colors"
@@ -416,6 +492,39 @@ export default function BuscadorCartasPage() {
 
                 {/* Info */}
                 <div className="space-y-4">
+                  {/* Regional Release Dates */}
+                  {selectedCard.misc_info && selectedCard.misc_info[0] && (
+                    <div className="p-3 bg-rola-gray/30 rounded-lg">
+                      <h3 className="text-white font-semibold mb-2">Fechas de Lanzamiento</h3>
+                      <div className="space-y-1 text-sm">
+                        {selectedCard.misc_info[0].tcg_date && (
+                          <p className="text-gray-400">
+                            <span className="inline-block px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded mr-2">
+                              TCG
+                            </span>
+                            {new Date(selectedCard.misc_info[0].tcg_date).toLocaleDateString('es-MX', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                        )}
+                        {selectedCard.misc_info[0].ocg_date && (
+                          <p className="text-gray-400">
+                            <span className="inline-block px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded mr-2">
+                              OCG
+                            </span>
+                            {new Date(selectedCard.misc_info[0].ocg_date).toLocaleDateString('es-MX', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <h3 className="text-gray-500 text-sm mb-1">Tipo</h3>
                     <p className="text-white">{selectedCard.type}</p>

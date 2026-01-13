@@ -69,6 +69,7 @@ export default function VentasPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoadingSales, setIsLoadingSales] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Campos de la venta
   const [paymentMethod, setPaymentMethod] = useState('CASH');
@@ -109,13 +110,16 @@ export default function VentasPage() {
     }
   };
 
-  const searchProducts = async () => {
-    if (!searchTerm.trim()) return;
+  const searchProducts = async (term: string) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
     setIsSearching(true);
     try {
       const response = await fetch(
-        `/api/inventory?search=${encodeURIComponent(searchTerm)}&active=true`
+        `/api/inventory?search=${encodeURIComponent(term)}&active=true`
       );
       if (response.ok) {
         const data = await response.json();
@@ -126,6 +130,34 @@ export default function VentasPage() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+
+    // Limpiar el timeout anterior
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Si el campo está vacío, limpiar resultados inmediatamente
+    if (!value.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Establecer un nuevo timeout para buscar después de 300ms
+    const newTimeout = setTimeout(() => {
+      searchProducts(value);
+    }, 300);
+
+    setSearchTimeout(newTimeout);
+  };
+
+  // Función para calcular el stock disponible (stock total - cantidad en carrito)
+  const getAvailableStock = (productId: string, productStock: number) => {
+    const cartItem = cart.find((item) => item.product.id === productId);
+    return cartItem ? productStock - cartItem.quantity : productStock;
   };
 
   const addToCart = (product: Product) => {
@@ -199,7 +231,7 @@ export default function VentasPage() {
 
   const calculateSubtotal = () => {
     return cart.reduce((sum, item) => {
-      const itemTotal = item.product.price * item.quantity - item.discount;
+      const itemTotal = parseFloat(item.product.price.toString()) * item.quantity - item.discount;
       return sum + itemTotal;
     }, 0);
   };
@@ -323,22 +355,17 @@ export default function VentasPage() {
                   Buscar Productos
                 </h2>
 
-                <div className="flex gap-2 mb-4">
+                <div className="mb-4">
                   <input
                     type="text"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && searchProducts()}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     placeholder="Buscar por nombre, SKU o código de carta..."
-                    className="flex-1 px-4 py-3 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold"
+                    className="w-full px-4 py-3 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold"
                   />
-                  <button
-                    onClick={searchProducts}
-                    disabled={isSearching}
-                    className="px-6 py-3 bg-rola-gold text-rola-black font-semibold rounded-lg hover:bg-rola-gold-light transition-colors disabled:opacity-50"
-                  >
-                    {isSearching ? 'Buscando...' : 'Buscar'}
-                  </button>
+                  {isSearching && (
+                    <p className="text-sm text-gray-400 mt-2">Buscando...</p>
+                  )}
                 </div>
 
                 {/* Resultados de búsqueda */}
@@ -363,12 +390,12 @@ export default function VentasPage() {
                           </p>
                           <p className="text-sm text-gray-400">SKU: {product.sku}</p>
                           <p className="text-sm text-gray-400">
-                            Stock: {product.stock} unidades
+                            Stock disponible: {getAvailableStock(product.id, product.stock)} / {product.stock} unidades
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-rola-gold">
-                            ${product.price.toFixed(2)} MXN
+                            ${parseFloat(product.price.toString()).toFixed(2)} MXN
                           </p>
                           <button className="text-sm text-rola-gold hover:text-rola-gold-light">
                             <Plus className="w-4 h-4 inline" /> Agregar
@@ -423,7 +450,10 @@ export default function VentasPage() {
                             {item.product.cardName || item.product.name}
                           </p>
                           <p className="text-sm text-gray-400">
-                            ${item.product.price.toFixed(2)} MXN c/u
+                            ${parseFloat(item.product.price.toString()).toFixed(2)} MXN c/u
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Stock restante: {item.product.stock - item.quantity} de {item.product.stock}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
                             <label className="text-xs text-gray-400">Cantidad:</label>
@@ -440,10 +470,11 @@ export default function VentasPage() {
                             <label className="text-xs text-gray-400 ml-2">Desc:</label>
                             <input
                               type="number"
-                              value={item.discount}
-                              onChange={(e) =>
-                                updateDiscount(item.product.id, parseFloat(e.target.value) || 0)
-                              }
+                              value={item.discount === 0 ? '' : item.discount}
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                updateDiscount(item.product.id, isNaN(value) ? 0 : value);
+                              }}
                               min="0"
                               step="0.01"
                               className="w-24 px-2 py-1 bg-rola-gray border border-rola-gray rounded text-white text-sm"
@@ -453,7 +484,7 @@ export default function VentasPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-rola-gold">
-                            ${(item.product.price * item.quantity - item.discount).toFixed(2)}
+                            ${(parseFloat(item.product.price.toString()) * item.quantity - item.discount).toFixed(2)}
                           </p>
                           <button
                             onClick={() => removeFromCart(item.product.id)}
@@ -519,8 +550,11 @@ export default function VentasPage() {
                     <label className="text-gray-300 text-sm">Descuento:</label>
                     <input
                       type="number"
-                      value={discount}
-                      onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                      value={discount === 0 ? '' : discount}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                        setDiscount(isNaN(value) ? 0 : value);
+                      }}
                       min="0"
                       step="0.01"
                       className="flex-1 px-3 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white"

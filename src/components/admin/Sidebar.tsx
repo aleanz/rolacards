@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
+  BarChart3,
 } from 'lucide-react';
 
 const menuItems = [
@@ -25,24 +26,9 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Eventos',
-    href: '/admin/eventos',
-    icon: Calendar,
-  },
-  {
     name: 'Usuarios',
     href: '/admin/usuarios',
     icon: Users,
-  },
-  {
-    name: 'Ubicación & Contacto',
-    href: '/admin/ubicacion-contacto',
-    icon: MapPin,
-  },
-  {
-    name: 'Buscador de Cartas',
-    href: '/admin/buscador-cartas',
-    icon: CreditCard,
   },
   {
     name: 'Ventas',
@@ -50,9 +36,29 @@ const menuItems = [
     icon: ShoppingCart,
   },
   {
+    name: 'Reportes',
+    href: '/admin/reportes',
+    icon: BarChart3,
+  },
+  {
     name: 'Inventario',
     href: '/admin/inventario',
     icon: Package,
+  },
+  {
+    name: 'Ubicación & Contacto',
+    href: '/admin/ubicacion-contacto',
+    icon: MapPin,
+  },
+  {
+    name: 'Eventos',
+    href: '/admin/eventos',
+    icon: Calendar,
+  },
+  {
+    name: 'Buscador de Cartas',
+    href: '/admin/buscador-cartas',
+    icon: CreditCard,
   },
 ];
 

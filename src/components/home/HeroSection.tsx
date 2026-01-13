@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar, ChevronRight, Sparkles } from 'lucide-react';
 
 export default function HeroSection() {
@@ -37,8 +38,25 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 container-custom text-center px-4">
+        {/* Logo */}
+        <div
+          className={`flex justify-center mb-8 transition-all duration-700 ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
+          <div className="relative w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
+            <Image
+              src="/logo.png"
+              alt="Rola Cards Logo"
+              fill
+              className="object-contain drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+              priority
+            />
+          </div>
+        </div>
+
         {/* Main Title */}
-        <h1 
+        <h1
           className={`font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6 transition-all duration-700 delay-150 ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
