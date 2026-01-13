@@ -112,7 +112,13 @@ export async function POST(request: NextRequest) {
 
     // Calcular totales
     let subtotal = 0;
-    const processedItems = [];
+    const processedItems: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: any;
+      discount: number;
+      total: number;
+    }> = [];
 
     for (const item of items) {
       const product = await prisma.product.findUnique({
