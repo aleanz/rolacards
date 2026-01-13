@@ -101,12 +101,12 @@ export async function PUT(request: NextRequest) {
           where: { key: setting.key },
           update: {
             value: String(setting.value),
-            type: setting.type || 'STRING',
+            type: (setting.type || 'STRING') as any,
           },
           create: {
             key: setting.key,
             value: String(setting.value),
-            type: setting.type || 'STRING',
+            type: (setting.type || 'STRING') as any,
           },
         })
       )
