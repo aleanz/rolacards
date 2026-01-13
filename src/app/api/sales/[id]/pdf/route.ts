@@ -60,7 +60,7 @@ export async function GET(
     // Generar PDF
     const pdfBuffer = await generateSaleReceipt(sale, storeInfo);
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="comprobante-${sale.number}.pdf"`,
