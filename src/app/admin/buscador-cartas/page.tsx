@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Search, X, Filter, ChevronDown, Eye, ExternalLink } from 'lucide-react';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface Card {
   id: number;
@@ -208,25 +209,22 @@ export default function BuscadorCartasPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-white mb-2">
-            Buscador de Cartas Yu-Gi-Oh!
-          </h1>
-          <p className="text-gray-400">
-            Busca cartas usando la base de datos de YGOProDeck
-          </p>
-        </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-outline"
-        >
-          <Filter className="w-4 h-4" />
-          {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
-        </button>
-      </div>
+      <PageHeader
+        title="Buscador de Cartas Yu-Gi-Oh!"
+        description="Busca cartas usando la base de datos de YGOProDeck"
+        action={
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="btn btn-outline btn-sm sm:btn w-full sm:w-auto"
+          >
+            <Filter className="w-4 h-4" />
+            <span className="hidden sm:inline">{showFilters ? 'Ocultar' : 'Mostrar'} Filtros</span>
+            <span className="sm:hidden">{showFilters ? 'Ocultar' : 'Filtros'}</span>
+          </button>
+        }
+      />
 
       {/* Filters */}
       {showFilters && (

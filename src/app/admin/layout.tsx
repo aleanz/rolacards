@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import { cn } from '@/lib/utils';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -49,10 +50,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       />
 
       <main
-        className="min-h-screen transition-all duration-300"
-        style={{ marginLeft: isCollapsed ? '5rem' : '16rem' }}
+        className={cn(
+          'min-h-screen transition-all duration-300',
+          // No margin on mobile, margin on desktop based on collapsed state
+          'lg:ml-64',
+          isCollapsed && 'lg:ml-20'
+        )}
       >
-        <div className="p-8">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">{children}</div>
       </main>
     </div>
   );

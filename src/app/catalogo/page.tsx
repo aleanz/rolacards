@@ -107,44 +107,47 @@ export default function CatalogoPage() {
       <Header />
       <main className="min-h-screen pt-20">
         <div className="section">
-          <div className="container-custom space-y-6">
+          <div className="container-custom space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
                   Nuestro <span className="text-gradient">Catálogo</span>
                 </h1>
-                <p className="text-gray-400">
+                <p className="text-sm sm:text-base text-gray-400">
                   Explora nuestro inventario de cartas y accesorios
                 </p>
               </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="btn btn-outline"
-              >
-                <Filter className="w-4 h-4" />
-                {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
-              </button>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="btn btn-outline btn-sm sm:btn w-full sm:w-auto"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="hidden sm:inline">{showFilters ? 'Ocultar' : 'Mostrar'} Filtros</span>
+                  <span className="sm:hidden">{showFilters ? 'Ocultar' : 'Filtros'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Search Bar */}
-            <div className="card p-4">
+            <div className="card p-3 sm:p-4">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por nombre, SKU o código de carta..."
-                  className="w-full pl-12 pr-4 py-3 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
+                  placeholder="Buscar por nombre, SKU o código..."
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
                 />
               </div>
             </div>
 
             {/* Filters */}
             {showFilters && (
-              <div className="card p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="card p-4 sm:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Categoría */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -183,7 +186,7 @@ export default function CatalogoPage() {
                   </div>
                 </div>
 
-                <button onClick={clearFilters} className="btn btn-ghost w-full">
+                <button onClick={clearFilters} className="btn btn-ghost btn-sm sm:btn w-full">
                   Limpiar Filtros
                 </button>
               </div>
@@ -201,11 +204,11 @@ export default function CatalogoPage() {
                   {products.length} producto{products.length !== 1 ? 's' : ''} disponible
                   {products.length !== 1 ? 's' : ''}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                   {products.map((product) => (
                     <div
                       key={product.id}
-                      className="card p-4 hover:border-rola-gold transition-all group"
+                      className="card p-3 sm:p-4 hover:border-rola-gold transition-all group"
                     >
                       {/* Image */}
                       <div className="relative aspect-[3/4] mb-4 bg-rola-gray/30 rounded-lg overflow-hidden">

@@ -13,6 +13,7 @@ import {
   Filter,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface SaleItem {
   productName: string;
@@ -189,28 +190,32 @@ export default function ReportesPage() {
 
   if (isLoading || !reportData) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-white mb-2">
-            Reportes de Ventas
-          </h1>
-          <p className="text-gray-400">Cargando reporte...</p>
-        </div>
+      <div className="space-y-4 sm:space-y-8">
+        <PageHeader
+          title="Reportes de Ventas"
+          description="Cargando reporte..."
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-3xl font-bold text-white mb-2">
-          Reportes de Ventas
-        </h1>
-        <p className="text-gray-400">
-          Análisis detallado de ventas con opciones de exportación
-        </p>
-      </div>
+      <PageHeader
+        title="Reportes de Ventas"
+        description="Análisis detallado de ventas con opciones de exportación"
+        action={
+          <button
+            onClick={downloadExcel}
+            className="btn btn-primary btn-sm sm:btn w-full sm:w-auto"
+          >
+            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Descargar Excel</span>
+            <span className="sm:hidden">Excel</span>
+          </button>
+        }
+      />
 
       {/* Filters */}
       <div className="card p-6">
@@ -279,13 +284,6 @@ export default function ReportesPage() {
             </select>
           </div>
 
-          <button
-            onClick={downloadExcel}
-            className="ml-auto px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
-          >
-            <Download className="w-5 h-5" />
-            Descargar Excel
-          </button>
         </div>
       </div>
 

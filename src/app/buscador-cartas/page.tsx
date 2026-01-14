@@ -214,30 +214,33 @@ export default function BuscadorCartasPage() {
       <Header />
       <main className="min-h-screen pt-20">
         <div className="section">
-          <div className="container-custom space-y-6">
+          <div className="container-custom space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
                   Buscador de Cartas <span className="text-gradient">Yu-Gi-Oh!</span>
                 </h1>
-                <p className="text-gray-400">
+                <p className="text-sm sm:text-base text-gray-400">
                   Busca cartas usando la base de datos de YGOProDeck
                 </p>
               </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="btn btn-outline"
-              >
-                <Filter className="w-4 h-4" />
-                {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
-              </button>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="btn btn-outline btn-sm sm:btn w-full sm:w-auto"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="hidden sm:inline">{showFilters ? 'Ocultar' : 'Mostrar'} Filtros</span>
+                  <span className="sm:hidden">{showFilters ? 'Ocultar' : 'Filtros'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Filters */}
             {showFilters && (
-              <div className="card p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="card p-4 sm:p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Nombre */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -350,12 +353,12 @@ export default function BuscadorCartasPage() {
                 </div>
 
                 {/* Botones */}
-                <div className="flex gap-3 pt-4">
-                  <button onClick={searchCards} className="btn btn-primary flex-1" disabled={isLoading}>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
+                  <button onClick={searchCards} className="btn btn-primary btn-sm sm:btn flex-1" disabled={isLoading}>
                     <Search className="w-4 h-4" />
                     {isLoading ? 'Buscando...' : 'Buscar'}
                   </button>
-                  <button onClick={clearFilters} className="btn btn-ghost">
+                  <button onClick={clearFilters} className="btn btn-ghost btn-sm sm:btn">
                     <X className="w-4 h-4" />
                     Limpiar
                   </button>
@@ -374,12 +377,12 @@ export default function BuscadorCartasPage() {
                 <div className="mb-4 text-gray-400">
                   Se encontraron {cards.length} carta{cards.length !== 1 ? 's' : ''}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                   {cards.map((card) => (
                     <div
                       key={card.id}
                       onClick={() => setSelectedCard(card)}
-                      className="card p-3 cursor-pointer hover:border-rola-gold transition-all group"
+                      className="card p-2 sm:p-3 cursor-pointer hover:border-rola-gold transition-all group"
                     >
                       <div className="relative">
                         <img
@@ -407,8 +410,8 @@ export default function BuscadorCartasPage() {
                           })()}
                         </div>
                       </div>
-                      <h3 className="text-white text-sm font-medium truncate">{card.name}</h3>
-                      <p className="text-gray-500 text-xs truncate">{card.type}</p>
+                      <h3 className="text-white text-xs sm:text-sm font-medium truncate">{card.name}</h3>
+                      <p className="text-gray-500 text-[10px] sm:text-xs truncate">{card.type}</p>
                     </div>
                   ))}
                 </div>

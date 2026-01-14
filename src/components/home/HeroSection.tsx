@@ -12,27 +12,27 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden hero-bg">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden hero-bg pt-20">
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Floating card shapes */}
-        <div 
-          className={`absolute top-1/4 left-10 w-32 h-44 bg-gradient-to-br from-rola-gold/10 to-transparent rounded-lg rotate-12 transition-all duration-1000 ${
+        <div
+          className={`absolute top-1/4 left-4 md:left-10 w-16 h-24 md:w-32 md:h-44 bg-gradient-to-br from-rola-gold/10 to-transparent rounded-lg rotate-12 transition-all duration-1000 ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
           style={{ animationDelay: '0.2s' }}
         />
-        <div 
-          className={`absolute top-1/3 right-20 w-24 h-36 bg-gradient-to-br from-rola-purple/10 to-transparent rounded-lg -rotate-12 transition-all duration-1000 delay-300 ${
+        <div
+          className={`absolute top-1/3 right-4 md:right-20 w-12 h-20 md:w-24 md:h-36 bg-gradient-to-br from-rola-purple/10 to-transparent rounded-lg -rotate-12 transition-all duration-1000 delay-300 ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         />
-        <div 
-          className={`absolute bottom-1/4 left-1/4 w-20 h-28 bg-gradient-to-br from-rola-blue/10 to-transparent rounded-lg rotate-6 transition-all duration-1000 delay-500 ${
+        <div
+          className={`absolute bottom-1/4 left-1/4 w-10 h-16 md:w-20 md:h-28 bg-gradient-to-br from-rola-blue/10 to-transparent rounded-lg rotate-6 transition-all duration-1000 delay-500 ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
         />
-        
+
       </div>
 
       {/* Content */}

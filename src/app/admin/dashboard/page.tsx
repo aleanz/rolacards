@@ -11,6 +11,7 @@ import {
   TrendingUp,
   DollarSign,
 } from 'lucide-react';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface DashboardStats {
   stats: {
@@ -67,13 +68,11 @@ export default function DashboardPage() {
 
   if (isLoading || !dashboardData) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-white mb-2">
-            Bienvenido, {session?.user.name}
-          </h1>
-          <p className="text-gray-400">Cargando estadísticas...</p>
-        </div>
+      <div className="space-y-4 sm:space-y-8">
+        <PageHeader
+          title={`Bienvenido, ${session?.user.name}`}
+          description="Cargando estadísticas..."
+        />
       </div>
     );
   }
@@ -118,19 +117,15 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       {/* Welcome Header */}
-      <div>
-        <h1 className="font-display text-3xl font-bold text-white mb-2">
-          Bienvenido, {session?.user.name}
-        </h1>
-        <p className="text-gray-400">
-          Aquí está un resumen de tu tienda Rola Cards
-        </p>
-      </div>
+      <PageHeader
+        title={`Bienvenido, ${session?.user.name}`}
+        description="Aquí está un resumen de tu tienda Rola Cards"
+      />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat) => (
           <Link key={stat.name} href={stat.href}>
             <div className="card p-6 cursor-pointer hover:bg-rola-gray/40 transition-all hover:scale-105">

@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface Product {
   id: string;
@@ -432,20 +433,19 @@ export default function InventarioPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-white mb-2">
-            Inventario
-          </h1>
-          <p className="text-gray-400">Gestiona tu inventario de cartas sueltas y producto sellado</p>
-        </div>
-        <button onClick={() => handleOpenModal()} className="btn btn-primary">
-          <Plus className="w-5 h-5" />
-          Agregar Producto
-        </button>
-      </div>
+      <PageHeader
+        title="Inventario"
+        description="Gestiona tu inventario de cartas sueltas y producto sellado"
+        action={
+          <button onClick={() => handleOpenModal()} className="btn btn-primary btn-sm sm:btn w-full sm:w-auto">
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Agregar Producto</span>
+            <span className="sm:hidden">Agregar</span>
+          </button>
+        }
+      />
 
       {/* Tabs */}
       <div className="card p-1">

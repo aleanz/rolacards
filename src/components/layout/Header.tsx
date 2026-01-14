@@ -48,13 +48,13 @@ export default function Header() {
       )}
     >
       <nav className="container-custom">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 relative">
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center group flex-shrink-0"
+            className="flex items-center group flex-shrink-0 z-10"
           >
-            <div className="relative w-24 h-12 sm:w-32 sm:h-16 transition-all duration-300 group-hover:scale-105 group-hover:brightness-110">
+            <div className="relative w-20 h-10 sm:w-24 sm:h-12 md:w-28 md:h-14 lg:w-32 lg:h-16 transition-all duration-300 group-hover:scale-105 group-hover:brightness-110">
               <Image
                 src="/logo.png"
                 alt="Rola Cards"
@@ -85,7 +85,7 @@ export default function Header() {
           {/* Admin button - Right side */}
           <Link
             href="/auth/login"
-            className="hidden lg:flex btn btn-ghost btn-sm flex-shrink-0"
+            className="hidden lg:flex btn btn-ghost btn-sm flex-shrink-0 z-10"
           >
             <LogIn className="w-4 h-4" />
             Admin
@@ -94,7 +94,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
+            className="lg:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors z-10 flex-shrink-0"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
@@ -105,14 +105,22 @@ export default function Header() {
           </button>
         </div>
 
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
         {/* Mobile Menu */}
         <div
           className={cn(
-            'lg:hidden overflow-hidden transition-all duration-300 ease-in-out',
-            isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            'lg:hidden fixed top-20 left-0 right-0 z-50 bg-rola-black/95 backdrop-blur-md border-t border-rola-gray/50 shadow-2xl transition-all duration-300 ease-in-out',
+            isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
           )}
         >
-          <div className="py-4 space-y-1 border-t border-rola-gray/50">
+          <div className="container-custom py-4 space-y-1 max-h-[calc(100vh-5rem)] overflow-y-auto">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -121,17 +129,17 @@ export default function Header() {
                 className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-rola-gray/50 rounded-lg transition-colors"
               >
                 {item.icon && <item.icon className="w-5 h-5 text-rola-gold" />}
-                {item.name}
+                <span className="text-sm font-medium">{item.name}</span>
               </Link>
             ))}
-            <div className="pt-4 border-t border-rola-gray/50">
+            <div className="pt-2 mt-2 border-t border-rola-gray/50">
               <Link
                 href="/auth/login"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 text-rola-gold hover:bg-rola-gray/50 rounded-lg transition-colors"
               >
                 <LogIn className="w-5 h-5" />
-                Acceso Admin
+                <span className="text-sm font-medium">Acceso Admin</span>
               </Link>
             </div>
           </div>

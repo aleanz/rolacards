@@ -18,6 +18,7 @@ import {
   User,
   Package,
 } from 'lucide-react';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface Product {
   id: string;
@@ -312,33 +313,36 @@ export default function VentasPage() {
     <div className="min-h-screen bg-rola-darker p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Punto de Venta</h1>
-          <p className="text-gray-400">Registra ventas y genera comprobantes</p>
+        <div className="mb-4 sm:mb-6">
+          <PageHeader
+            title="Punto de Venta"
+            description="Registra ventas y genera comprobantes"
+          />
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4 sm:mb-6">
           <button
             onClick={() => setActiveView('new')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg transition-all text-sm sm:text-base ${
               activeView === 'new'
                 ? 'bg-rola-gold text-rola-black font-semibold'
                 : 'bg-rola-gray/50 text-gray-300 hover:bg-rola-gray'
             }`}
           >
-            <ShoppingCart className="w-5 h-5" />
-            Nueva Venta
+            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Nueva Venta</span>
+            <span className="xs:hidden">Nueva</span>
           </button>
           <button
             onClick={() => setActiveView('history')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-lg transition-all text-sm sm:text-base ${
               activeView === 'history'
                 ? 'bg-rola-gold text-rola-black font-semibold'
                 : 'bg-rola-gray/50 text-gray-300 hover:bg-rola-gray'
             }`}
           >
-            <FileText className="w-5 h-5" />
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             Historial
           </button>
         </div>

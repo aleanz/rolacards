@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { MapPin, Clock, Phone, Mail, Save, ExternalLink } from 'lucide-react';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface StoreSettings {
   address: string;
@@ -125,16 +126,24 @@ export default function UbicacionContactoPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-3xl font-bold text-white mb-2">
-          Ubicación & Contacto
-        </h1>
-        <p className="text-gray-400">
-          Configura la información de contacto y ubicación de la tienda
-        </p>
-      </div>
+      <PageHeader
+        title="Ubicación & Contacto"
+        description="Configura la información de contacto y ubicación de la tienda"
+        action={
+          <button
+            type="submit"
+            form="ubicacion-form"
+            disabled={isSaving}
+            className="btn btn-primary btn-sm sm:btn w-full sm:w-auto"
+          >
+            <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">{isSaving ? 'Guardando...' : 'Guardar cambios'}</span>
+            <span className="sm:hidden">{isSaving ? 'Guardando...' : 'Guardar'}</span>
+          </button>
+        }
+      />
 
       {/* Messages */}
       {successMessage && (
@@ -149,7 +158,7 @@ export default function UbicacionContactoPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="ubicacion-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Ubicación */}
         <div className="card p-6">
           <div className="flex items-center gap-3 mb-6">
@@ -332,17 +341,6 @@ export default function UbicacionContactoPage() {
           </div>
         </div>
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="btn btn-primary"
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
       </form>
     </div>
   );
