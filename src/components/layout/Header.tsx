@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import {
   Menu,
@@ -13,7 +14,8 @@ import {
   MapPin,
   Mail,
   LogIn,
-  Info
+  Info,
+  LayoutDashboard
 } from 'lucide-react';
 
 const navigation = [
@@ -28,6 +30,12 @@ const navigation = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data: session } = useSession();
+
+  // Determine auth button properties based on session
+  const authHref = session ? '/admin/dashboard' : '/auth/login';
+  const authText = session ? 'Dashboard' : 'Ingresar';
+  const AuthIcon = session ? LayoutDashboard : LogIn;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,13 +90,13 @@ export default function Header() {
             ))}
           </div>
 
-          {/* Admin button - Right side */}
+          {/* Auth button - Right side */}
           <Link
-            href="/auth/login"
-            className="hidden lg:flex btn btn-ghost btn-sm flex-shrink-0 z-10"
+            href={authHref}
+            className="hidden lg:flex btn btn-primary btn-sm flex-shrink-0 z-10"
           >
-            <LogIn className="w-4 h-4" />
-            Admin
+            <AuthIcon className="w-4 h-4" />
+            {authText}
           </Link>
 
           {/* Mobile Menu Button */}
@@ -134,12 +142,12 @@ export default function Header() {
             ))}
             <div className="pt-2 mt-2 border-t border-rola-gray/50">
               <Link
-                href="/auth/login"
+                href={authHref}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 text-rola-gold hover:bg-rola-gray/50 rounded-lg transition-colors"
               >
-                <LogIn className="w-5 h-5" />
-                <span className="text-sm font-medium">Acceso Admin</span>
+                <AuthIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">{authText}</span>
               </Link>
             </div>
           </div>
