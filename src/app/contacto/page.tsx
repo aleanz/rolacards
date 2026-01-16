@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Mail, Phone, MapPin, Clock, Send, MessageSquare } from 'lucide-react';
-
+//
 interface StoreSettings {
   address: string;
   city: string;
