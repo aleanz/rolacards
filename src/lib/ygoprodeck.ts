@@ -3,6 +3,21 @@
 
 const API_BASE_URL = process.env.YGOPRODECK_API_URL || 'https://db.ygoprodeck.com/api/v7';
 
+export interface BanlistInfo {
+  ban_tcg?: string;
+  ban_ocg?: string;
+  ban_goat?: string;
+  ban_edison?: string;
+}
+
+export interface MiscInfo {
+  beta_name?: string;
+  tcg_date?: string;
+  ocg_date?: string;
+  konami_id?: number;
+  has_effect?: number;
+}
+
 export interface YGOCard {
   id: number;
   name: string;
@@ -21,6 +36,8 @@ export interface YGOCard {
   card_sets?: CardSet[];
   card_images: CardImage[];
   card_prices: CardPrice[];
+  banlist_info?: BanlistInfo;
+  misc_info?: MiscInfo[];
 }
 
 export interface CardSet {

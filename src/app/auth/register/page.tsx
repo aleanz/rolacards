@@ -1,69 +1,93 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Si ya hay sesión activa, redirigir según el rol
-  if (status === 'authenticated' && session) {
-    if (session.user.role === 'CLIENTE') {
-      router.push('/');
-    } else {
-      router.push('/admin/dashboard');
-    }
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-rola-black">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-rola-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Redirigiendo...</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
+    // Validaciones
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
       });
 
-      if (result?.error) {
-        setError('Credenciales inválidas');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Ocurrió un error al registrarte');
         setIsLoading(false);
         return;
       }
 
-      if (result?.ok) {
-        // Esperar un momento para que la sesión se actualice
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Usar window.location para forzar la recarga y obtener la sesión actualizada
-        // Esto permite que el servidor decida la redirección según el rol
-        window.location.href = '/auth/check-role';
-      }
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 3000);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Register error:', error);
       setError('Ocurrió un error. Intenta de nuevo.');
       setIsLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-rola-black">
+        <div className="w-full max-w-md">
+          <div className="card p-8 text-center">
+            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+            <h1 className="font-display text-2xl font-bold text-white mb-2">
+              ¡Registro exitoso!
+            </h1>
+            <p className="text-gray-400 mb-4">
+              Se ha enviado un correo de verificación a tu email.
+            </p>
+            <p className="text-sm text-gray-500">
+              Redirigiendo al login...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-rola-black">
@@ -87,14 +111,14 @@ export default function LoginPage() {
           </div>
         </Link>
 
-        {/* Login Card */}
+        {/* Register Card */}
         <div className="card p-8">
           <div className="text-center mb-8">
             <h1 className="font-display text-3xl font-bold text-white mb-2">
-              Iniciar Sesión
+              Crear Cuenta
             </h1>
             <p className="text-gray-400">
-              Accede al panel de administración
+              Únete a la comunidad de Rola Cards
             </p>
           </div>
 
@@ -106,8 +130,26 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Register Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                Nombre completo
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
+                  placeholder="Tu nombre"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 Correo electrónico
@@ -140,6 +182,26 @@ export default function LoginPage() {
                   className="w-full pl-10 pr-4 py-3 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
                   placeholder="••••••••"
                   required
+                  minLength={6}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                Confirmar contraseña
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
                 />
               </div>
             </div>
@@ -150,43 +212,34 @@ export default function LoginPage() {
               className="w-full btn btn-primary btn-lg"
             >
               {isLoading ? (
-                <span>Iniciando sesión...</span>
+                <span>Registrando...</span>
               ) : (
                 <>
-                  <LogIn className="w-5 h-5" />
-                  Iniciar Sesión
+                  <UserPlus className="w-5 h-5" />
+                  Crear Cuenta
                 </>
               )}
             </button>
           </form>
 
-          {/* Create account */}
+          {/* Already have account */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
-              ¿No tienes cuenta?{' '}
+              ¿Ya tienes cuenta?{' '}
               <Link
-                href="/auth/register"
+                href="/auth/login"
                 className="text-rola-gold hover:text-rola-gold/80 transition-colors font-medium"
               >
-                Regístrate
+                Inicia sesión
               </Link>
             </p>
-          </div>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-rola-gold/5 border border-rola-gold/20">
-            <p className="text-xs text-gray-400 mb-2 font-medium">Usuarios de prueba:</p>
-            <div className="space-y-1 text-xs text-gray-500">
-              <p>👤 Admin: admin@rolacards.com / admin123</p>
-              <p>👤 Staff: staff@rolacards.com / staff123</p>
-            </div>
           </div>
 
           {/* Back to home */}
           <div className="mt-4 text-center">
             <Link
               href="/"
-              className="text-sm text-gray-400 hover:text-rola-gold transition-colors"
+              className="text-sm text-gray-500 hover:text-gray-400 transition-colors"
             >
               ← Volver al inicio
             </Link>

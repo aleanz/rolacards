@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import {
   Menu,
@@ -15,7 +15,12 @@ import {
   Mail,
   LogIn,
   Info,
-  LayoutDashboard
+  LayoutDashboard,
+  User,
+  LogOut,
+  ChevronDown,
+  Layers,
+  ClipboardList
 } from 'lucide-react';
 
 const navigation = [
@@ -30,12 +35,15 @@ const navigation = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { data: session } = useSession();
 
-  // Determine auth button properties based on session
-  const authHref = session ? '/admin/dashboard' : '/auth/login';
-  const authText = session ? 'Dashboard' : 'Ingresar';
-  const AuthIcon = session ? LayoutDashboard : LogIn;
+  const isCliente = session?.user?.role === 'CLIENTE';
+  const isAdminOrStaff = session?.user?.role === 'ADMIN' || session?.user?.role === 'STAFF';
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -91,13 +99,72 @@ export default function Header() {
           </div>
 
           {/* Auth button - Right side */}
-          <Link
-            href={authHref}
-            className="hidden lg:flex btn btn-primary btn-sm flex-shrink-0 z-10"
-          >
-            <AuthIcon className="w-4 h-4" />
-            {authText}
-          </Link>
+          <div className="hidden lg:flex items-center gap-3 flex-shrink-0 z-10">
+            {!session && (
+              <Link href="/auth/login" className="btn btn-primary btn-sm">
+                <LogIn className="w-4 h-4" />
+                Ingresar
+              </Link>
+            )}
+
+            {isAdminOrStaff && (
+              <Link href="/admin/dashboard" className="btn btn-primary btn-sm">
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+            )}
+
+            {isCliente && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span>{session.user.name}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+
+                {isUserMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-rola-black/95 backdrop-blur-md border border-rola-gray/50 rounded-lg shadow-xl z-20">
+                      <div className="p-3 border-b border-rola-gray/50">
+                        <p className="text-sm font-medium text-white">{session.user.name}</p>
+                        <p className="text-xs text-gray-400">{session.user.email}</p>
+                      </div>
+                      <Link
+                        href="/mazos"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
+                      >
+                        <Layers className="w-4 h-4" />
+                        Mis Mazos
+                      </Link>
+                      <Link
+                        href="/inscripciones"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                        Mis Inscripciones
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-rola-gray/50 transition-colors border-t border-rola-gray/50"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -141,14 +208,67 @@ export default function Header() {
               </Link>
             ))}
             <div className="pt-2 mt-2 border-t border-rola-gray/50">
-              <Link
-                href={authHref}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-rola-gold hover:bg-rola-gray/50 rounded-lg transition-colors"
-              >
-                <AuthIcon className="w-5 h-5" />
-                <span className="text-sm font-medium">{authText}</span>
-              </Link>
+              {!session && (
+                <Link
+                  href="/auth/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-rola-gold hover:bg-rola-gray/50 rounded-lg transition-colors"
+                >
+                  <LogIn className="w-5 h-5" />
+                  <span className="text-sm font-medium">Ingresar</span>
+                </Link>
+              )}
+
+              {isAdminOrStaff && (
+                <Link
+                  href="/admin/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-rola-gold hover:bg-rola-gray/50 rounded-lg transition-colors"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  <span className="text-sm font-medium">Dashboard</span>
+                </Link>
+              )}
+
+              {isCliente && (
+                <>
+                  <div className="px-4 py-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <User className="w-5 h-5 text-rola-gold" />
+                      <div>
+                        <p className="text-sm font-medium text-white">{session.user.name}</p>
+                        <p className="text-xs text-gray-400">{session.user.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href="/mazos"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-rola-gray/50 rounded-lg transition-colors"
+                  >
+                    <Layers className="w-5 h-5" />
+                    <span className="text-sm font-medium">Mis Mazos</span>
+                  </Link>
+                  <Link
+                    href="/inscripciones"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-rola-gray/50 rounded-lg transition-colors"
+                  >
+                    <ClipboardList className="w-5 h-5" />
+                    <span className="text-sm font-medium">Mis Inscripciones</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-rola-gray/50 rounded-lg transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="text-sm font-medium">Cerrar sesión</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

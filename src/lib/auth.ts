@@ -49,12 +49,19 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Contraseña incorrecta');
           }
 
+          // Verificar si es un cliente sin email verificado
+          if (user.role === 'CLIENTE' && !user.emailVerified) {
+            console.log('⚠️ Cliente sin email verificado:', user.email);
+            throw new Error('Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+          }
+
           console.log('✅ Login successful for:', user.email);
           return {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role,
+            emailVerified: user.emailVerified,
           };
         } catch (error) {
           console.error('❌ Auth error:', error);
@@ -68,6 +75,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.emailVerified = !!user.emailVerified;
       }
       return token;
     },
@@ -75,6 +83,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.emailVerified = token.emailVerified as boolean;
       }
       return session;
     },

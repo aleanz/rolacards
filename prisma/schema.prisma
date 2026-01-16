@@ -21,18 +21,24 @@ model User {
   name          String
   role          Role      @default(STAFF)
   avatar        String?
+  emailVerified Boolean   @default(false)
+  verificationToken String? @unique
+  konamiId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
+
   // Relations
   sales         Sale[]
   createdEvents Event[]   @relation("EventCreator")
   createdNews   News[]    @relation("NewsCreator")
+  decks         Deck[]
+  registrations EventRegistration[]
 }
 
 enum Role {
   ADMIN
   STAFF
+  CLIENTE
 }
 
 // ============================================
@@ -58,11 +64,12 @@ model Event {
   featured    Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  
+
   // Relations
   creatorId   String
   creator     User        @relation("EventCreator", fields: [creatorId], references: [id])
-  
+  registrations EventRegistration[]
+
   @@index([date])
   @@index([type])
   @@index([published])
@@ -316,4 +323,70 @@ enum SettingType {
   NUMBER
   BOOLEAN
   JSON
+}
+
+// ============================================
+// DECK BUILDER & EVENT REGISTRATIONS
+// ============================================
+
+model EventRegistration {
+  id            String              @id @default(cuid())
+  status        RegistrationStatus  @default(PENDIENTE)
+  rejectionNote String?             @db.Text
+  konamiId      String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  userId        String
+  user          User                @relation(fields: [userId], references: [id])
+  eventId       String
+  event         Event               @relation(fields: [eventId], references: [id])
+  deckId        String
+  deck          Deck                @relation(fields: [deckId], references: [id])
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+}
+
+enum RegistrationStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+model Deck {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  format      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  cards       DeckCard[]
+  registrations EventRegistration[]
+
+  @@index([userId])
+}
+
+model DeckCard {
+  id       String   @id @default(cuid())
+  cardId   Int
+  quantity Int      @default(1)
+  deckType DeckType
+  cardData Json
+
+  deckId   String
+  deck     Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, cardId, deckType])
+  @@index([deckId])
+}
+
+enum DeckType {
+  MAIN
+  EXTRA
+  SIDE
 }

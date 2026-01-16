@@ -15,7 +15,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (status === 'unauthenticated') {
       router.push('/auth/login');
     }
-  }, [status, router]);
+
+    // Si es un cliente, redirigir a la página principal
+    if (status === 'authenticated' && session?.user?.role === 'CLIENTE') {
+      router.push('/');
+    }
+  }, [status, router, session]);
 
   if (status === 'loading') {
     return (
