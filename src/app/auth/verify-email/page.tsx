@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -152,5 +152,37 @@ export default function VerifyEmailPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center px-4 bg-rola-black">
+        <div className="w-full max-w-md relative z-10">
+          <Link href="/" className="flex justify-center mb-8">
+            <div className="relative w-40 h-20">
+              <Image
+                src="/logo.png"
+                alt="Rola Cards"
+                fill
+                className="object-contain brightness-90 contrast-110"
+                style={{ mixBlendMode: 'lighten' }}
+              />
+            </div>
+          </Link>
+          <div className="card p-8 text-center">
+            <div className="w-16 h-16 bg-rola-gold/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-8 h-8 text-rola-gold animate-spin" />
+            </div>
+            <h1 className="font-display text-2xl font-bold text-white mb-2">
+              Cargando...
+            </h1>
+          </div>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
