@@ -4,6 +4,9 @@ import prisma from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json();
