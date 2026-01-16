@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { canCancelRegistration } from '@/lib/registration-validation';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET /api/registrations/[id] - Get specific registration with full deck details
 export async function GET(
   request: NextRequest,

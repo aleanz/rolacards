@@ -5,6 +5,9 @@ import prisma from '@/lib/prisma';
 import { validateDeck } from '@/lib/deck-validation';
 import { canDeleteDeck } from '@/lib/registration-validation';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET /api/decks/[id] - Get specific deck
 export async function GET(
   request: NextRequest,

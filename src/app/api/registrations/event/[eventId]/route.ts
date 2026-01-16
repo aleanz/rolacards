@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET /api/registrations/event/[eventId] - Get all registrations for a specific event (Admin/Staff only)
 export async function GET(
   request: NextRequest,

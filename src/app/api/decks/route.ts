@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { validateDeck } from '@/lib/deck-validation';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET /api/decks - List user's decks (or all decks for admin with ?userId=xxx)
 export async function GET(request: NextRequest) {
   try {

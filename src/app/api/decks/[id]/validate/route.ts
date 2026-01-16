@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { validateDeck } from '@/lib/deck-validation';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // POST /api/decks/[id]/validate - Validate deck without saving
 export async function POST(
   request: NextRequest,

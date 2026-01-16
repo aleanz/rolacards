@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth';
 
 const YGOPRODECK_API = 'https://db.ygoprodeck.com/api/v7';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // GET /api/cards/search?name=xxx&num=20
 export async function GET(request: NextRequest) {
   try {
