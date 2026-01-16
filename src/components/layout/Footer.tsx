@@ -37,8 +37,20 @@ interface StoreSettings {
   scheduleWeekend: string;
 }
 
+// Valores por defecto
+const DEFAULT_SETTINGS: StoreSettings = {
+  address: 'Belisario Dominguez Norte 1202',
+  city: 'Tuxtla Gutiérrez',
+  state: 'Chiapas',
+  phone: '+52 961 109 4654',
+  whatsapp: '5219611094654',
+  email: 'rolacards@gmail.com',
+  scheduleWeekday: '3PM - 9PM',
+  scheduleWeekend: '12PM - 9PM',
+};
+
 export default function Footer() {
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     fetchSettings();
@@ -70,17 +82,7 @@ export default function Footer() {
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
-      // Usar valores por defecto
-      setSettings({
-        address: 'Tu dirección aquí',
-        city: 'Ciudad',
-        state: 'Estado',
-        phone: '+52 123 456 7890',
-        whatsapp: '521234567890',
-        email: 'info@rolacards.com',
-        scheduleWeekday: '3PM - 9PM',
-        scheduleWeekend: '12PM - 9PM',
-      });
+      // Mantener valores por defecto (ya establecidos en useState)
     }
   };
 
