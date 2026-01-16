@@ -237,17 +237,5 @@ export default async function EventDetailPage({ params }: EventPageProps) {
   );
 }
 
-// Generate static params for all published events
-export async function generateStaticParams() {
-  const events = await prisma.event.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
-
-  return events.map((event) => ({
-    slug: event.slug,
-  }));
-}
-
-// Enable ISR
-export const revalidate = 60; // Revalidate every 60 seconds
+// Force dynamic rendering (no static generation during build)
+export const dynamic = 'force-dynamic';
