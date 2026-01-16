@@ -37,16 +37,16 @@ interface StoreSettings {
   scheduleWeekend: string;
 }
 
-// Valores por defecto
+// Valores por defecto (datos reales de la tienda)
 const DEFAULT_SETTINGS: StoreSettings = {
-  address: 'Belisario Dominguez Norte 1202',
-  city: 'Tuxtla Gutiérrez',
-  state: 'Chiapas',
-  phone: '+52 961 109 4654',
-  whatsapp: '5219611094654',
-  email: 'rolacards@gmail.com',
-  scheduleWeekday: '3PM - 9PM',
-  scheduleWeekend: '12PM - 9PM',
+  address: 'Miguel Hidalgo Y Costilla 812, Centro, 66',
+  city: 'San Nicolas de los Garza',
+  state: 'Nuevo Leon',
+  phone: '+52 8110187496',
+  whatsapp: '528110187496',
+  email: 'info@rolacards.com',
+  scheduleWeekday: '6PM - 10PM',
+  scheduleWeekend: '6PM - 12AM',
 };
 
 export default function Footer() {
