@@ -9,10 +9,15 @@ export const dynamic = 'force-dynamic';
 // GET /api/events - Listar eventos
 export async function GET(request: NextRequest) {
   try {
+    console.log('[API /api/events] Starting request');
+    console.log('[API /api/events] URL:', request.url);
+
     const { searchParams } = new URL(request.url);
     const published = searchParams.get('published');
     const featured = searchParams.get('featured');
     const upcoming = searchParams.get('upcoming');
+
+    console.log('[API /api/events] Filters:', { published, featured, upcoming });
 
     const where: any = {};
 
@@ -33,6 +38,9 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    console.log('[API /api/events] Where clause:', JSON.stringify(where));
+    console.log('[API /api/events] Querying database...');
+
     const events = await prisma.event.findMany({
       where,
       include: {
@@ -49,10 +57,19 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log('[API /api/events] Found events:', events.length);
+    console.log('[API /api/events] Success, returning events');
+
     return NextResponse.json(events);
   } catch (error) {
-    console.error('Error fetching events:', error);
-    return NextResponse.json({ error: 'Error al obtener eventos' }, { status: 500 });
+    console.error('[API /api/events] ERROR:', error);
+    console.error('[API /api/events] Error name:', error instanceof Error ? error.name : 'unknown');
+    console.error('[API /api/events] Error message:', error instanceof Error ? error.message : 'unknown');
+    console.error('[API /api/events] Error stack:', error instanceof Error ? error.stack : 'unknown');
+    return NextResponse.json({
+      error: 'Error al obtener eventos',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    }, { status: 500 });
   }
 }
 
