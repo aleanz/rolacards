@@ -71,19 +71,50 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // En el login inicial, guardar datos del usuario
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
         token.role = user.role;
         token.emailVerified = !!user.emailVerified;
       }
+
+      // Actualizar token cuando se llama update() desde el cliente
+      if (trigger === 'update') {
+        // Obtener datos actualizados del usuario
+        const updatedUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            emailVerified: true,
+            avatar: true,
+          },
+        });
+
+        if (updatedUser) {
+          token.name = updatedUser.name;
+          token.email = updatedUser.email;
+          token.picture = updatedUser.avatar;
+          token.role = updatedUser.role;
+          token.emailVerified = updatedUser.emailVerified;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
         session.user.role = token.role as string;
         session.user.emailVerified = token.emailVerified as boolean;
+        session.user.image = token.picture as string | null;
       }
       return session;
     },

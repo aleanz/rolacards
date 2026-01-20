@@ -120,7 +120,21 @@ export default function Header() {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
                 >
-                  <User className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-rola-gray border border-rola-gold flex-shrink-0">
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user.name || 'Usuario'}
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
                   <span>{session.user.name}</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -136,6 +150,14 @@ export default function Header() {
                         <p className="text-sm font-medium text-white">{session.user.name}</p>
                         <p className="text-xs text-gray-400">{session.user.email}</p>
                       </div>
+                      <Link
+                        href="/perfil"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Mi Perfil
+                      </Link>
                       <Link
                         href="/mazos"
                         onClick={() => setIsUserMenuOpen(false)}
@@ -234,13 +256,35 @@ export default function Header() {
                 <>
                   <div className="px-4 py-3">
                     <div className="flex items-center gap-3 mb-2">
-                      <User className="w-5 h-5 text-rola-gold" />
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-rola-gray border-2 border-rola-gold flex-shrink-0">
+                        {session.user.image ? (
+                          <Image
+                            src={session.user.image}
+                            alt={session.user.name || 'Usuario'}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-white">{session.user.name}</p>
                         <p className="text-xs text-gray-400">{session.user.email}</p>
                       </div>
                     </div>
                   </div>
+                  <Link
+                    href="/perfil"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-rola-gray/50 rounded-lg transition-colors"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="text-sm font-medium">Mi Perfil</span>
+                  </Link>
                   <Link
                     href="/mazos"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -250,7 +294,7 @@ export default function Header() {
                     <span className="text-sm font-medium">Mis Mazos</span>
                   </Link>
                   <Link
-                    href="/inscripciones"
+                    href="/mis-inscripciones"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-rola-gray/50 rounded-lg transition-colors"
                   >
