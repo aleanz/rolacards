@@ -66,6 +66,11 @@ MAILGUN_API_KEY=tu-mailgun-api-key-aqui
 MAILGUN_DOMAIN=rolacards.com
 MAILGUN_BASE_URL=https://api.mailgun.net
 EMAIL_FROM=Rola Cards <noreply@rolacards.com>
+
+# Cloudinary Configuration (Para almacenamiento de imágenes)
+CLOUDINARY_CLOUD_NAME=tu-cloud-name-aqui
+CLOUDINARY_API_KEY=tu-api-key-aqui
+CLOUDINARY_API_SECRET=tu-api-secret-aqui
 ```
 
 ### Variables Existentes (Mantener):
@@ -99,6 +104,7 @@ Vercel instalará automáticamente estos paquetes desde `package.json`:
 
 - `mailgun.js@^11.1.0` - Cliente de Mailgun
 - `form-data@^4.0.1` - Requerido por Mailgun
+- `cloudinary@^2.6.0` - Almacenamiento de imágenes en la nube
 - `uuid@^11.0.5` - Para nombres únicos de archivos (ya instalado)
 - `dotenv@^17.2.3` - Para scripts (dev only)
 

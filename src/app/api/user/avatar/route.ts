@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { writeFile, mkdir, unlink } from 'fs/promises';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configurar Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,32 +46,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Obtener usuario actual para eliminar avatar anterior
+    // Obtener usuario actual para eliminar avatar anterior de Cloudinary
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { avatar: true },
     });
 
+    // Convertir el archivo a Buffer
     const bytes = await avatarFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Crear directorio si no existe
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'avatars');
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
-      // Directory already exists
-    }
+    // Subir a Cloudinary
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'rolacards/avatars',
+          resource_type: 'image',
+          transformation: [
+            { width: 300, height: 300, crop: 'fill', gravity: 'face' },
+            { quality: 'auto', fetch_format: 'auto' },
+          ],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(buffer);
+    });
 
-    // Generar nombre único para el archivo
-    const fileExtension = avatarFile.name.split('.').pop();
-    const fileName = `${randomUUID()}.${fileExtension}`;
-    const filePath = join(uploadsDir, fileName);
-
-    // Guardar archivo
-    await writeFile(filePath, buffer);
-
-    const avatarUrl = `/uploads/avatars/${fileName}`;
+    const avatarUrl = uploadResult.secure_url;
 
     // Actualizar usuario
     const updatedUser = await prisma.user.update({
@@ -80,13 +89,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Eliminar avatar anterior si existe
-    if (user?.avatar && user.avatar.startsWith('/uploads/avatars/')) {
+    // Eliminar avatar anterior de Cloudinary si existe
+    if (user?.avatar && user.avatar.includes('cloudinary.com')) {
       try {
-        const oldAvatarPath = join(process.cwd(), 'public', user.avatar);
-        await unlink(oldAvatarPath);
+        // Extraer el public_id del URL de Cloudinary
+        const publicIdMatch = user.avatar.match(/\/rolacards\/avatars\/([^/]+)\./);
+        if (publicIdMatch) {
+          const publicId = `rolacards/avatars/${publicIdMatch[1]}`;
+          await cloudinary.uploader.destroy(publicId);
+        }
       } catch (error) {
-        console.warn('No se pudo eliminar avatar anterior:', error);
+        console.warn('No se pudo eliminar avatar anterior de Cloudinary:', error);
       }
     }
 
