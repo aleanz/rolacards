@@ -151,6 +151,7 @@ export default function PerfilPage() {
 
     setAvatar(file);
     setAvatarPreview(URL.createObjectURL(file));
+    setAvatarError(false); // Resetear error al seleccionar nueva imagen
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -177,6 +178,7 @@ export default function PerfilPage() {
         const avatarData = await avatarRes.json();
         setAvatarPreview(avatarData.user.avatar);
         setAvatar(null);
+        setAvatarError(false); // Resetear error después de subir exitosamente
       }
 
       // Update profile
