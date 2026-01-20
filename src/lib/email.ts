@@ -130,6 +130,11 @@ export async function sendVerificationEmail(email: string, token: string, name: 
               <div class="footer">
                 <p>Este correo fue enviado por Rola Cards</p>
                 <p>© ${new Date().getFullYear()} Rola Cards. Todos los derechos reservados.</p>
+                <p style="margin-top: 10px;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://rolacards.com'}" style="color: #666; text-decoration: none;">
+                    Visita nuestro sitio web
+                  </a>
+                </p>
               </div>
             </div>
           </body>
@@ -282,6 +287,11 @@ export async function sendRegistrationNotification(
               <div class="footer">
                 <p>Este correo fue enviado por Rola Cards</p>
                 <p>© ${new Date().getFullYear()} Rola Cards. Todos los derechos reservados.</p>
+                <p style="margin-top: 10px;">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://rolacards.com'}" style="color: #666; text-decoration: none;">
+                    Visita nuestro sitio web
+                  </a>
+                </p>
               </div>
             </div>
           </body>
