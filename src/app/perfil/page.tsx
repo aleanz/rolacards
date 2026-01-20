@@ -71,6 +71,7 @@ export default function PerfilPage() {
   const [konamiId, setKonamiId] = useState('');
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
 
   // Password change states
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -103,7 +104,12 @@ export default function PerfilPage() {
         setUser(data.user);
         setName(data.user.name);
         setKonamiId(data.user.konamiId || '');
-        setAvatarPreview(data.user.avatar);
+        // Solo establecer avatar si es una URL de Cloudinary válida
+        if (data.user.avatar && data.user.avatar.includes('cloudinary.com')) {
+          setAvatarPreview(data.user.avatar);
+        } else {
+          setAvatarPreview(null);
+        }
       }
 
       // Fetch registrations
@@ -301,13 +307,14 @@ export default function PerfilPage() {
                   <div className="flex items-center gap-6">
                     <div className="relative">
                       <div className="w-24 h-24 rounded-full overflow-hidden bg-rola-gray border-2 border-rola-gold">
-                        {avatarPreview ? (
+                        {avatarPreview && !avatarError ? (
                           <Image
                             src={avatarPreview}
                             alt={name}
                             width={96}
                             height={96}
                             className="w-full h-full object-cover"
+                            onError={() => setAvatarError(true)}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
