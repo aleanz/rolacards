@@ -1,14 +1,31 @@
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 
-const mailgun = new Mailgun(formData);
-const mg = mailgun.client({
-  username: 'api',
-  key: process.env.MAILGUN_API_KEY || '',
-  url: process.env.MAILGUN_BASE_URL || 'https://api.mailgun.net',
-});
+// Inicializar Mailgun solo si hay API key configurada
+const getMailgunClient = () => {
+  const apiKey = process.env.MAILGUN_API_KEY;
+
+  if (!apiKey) {
+    console.warn('⚠️ MAILGUN_API_KEY no está configurada. Los emails no se enviarán.');
+    return null;
+  }
+
+  const mailgun = new Mailgun(formData);
+  return mailgun.client({
+    username: 'api',
+    key: apiKey,
+    url: process.env.MAILGUN_BASE_URL || 'https://api.mailgun.net',
+  });
+};
 
 export async function sendVerificationEmail(email: string, token: string, name: string) {
+  const mg = getMailgunClient();
+
+  if (!mg) {
+    console.error('❌ Mailgun no está configurado. No se puede enviar email.');
+    return { success: false, error: 'Mailgun not configured' };
+  }
+
   const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}`;
   const domain = process.env.MAILGUN_DOMAIN || '';
 
@@ -133,8 +150,14 @@ export async function sendRegistrationNotification(
   status: 'APROBADO' | 'RECHAZADO',
   rejectionNote?: string
 ) {
-  const domain = process.env.MAILGUN_DOMAIN || '';
+  const mg = getMailgunClient();
 
+  if (!mg) {
+    console.error('❌ Mailgun no está configurado. No se puede enviar email.');
+    return { success: false, error: 'Mailgun not configured' };
+  }
+
+  const domain = process.env.MAILGUN_DOMAIN || '';
   const statusText = status === 'APROBADO' ? 'aprobada' : 'rechazada';
   const statusColor = status === 'APROBADO' ? '#22c55e' : '#ef4444';
 
