@@ -149,8 +149,12 @@ export default function PerfilPage() {
       return;
     }
 
+    const blobUrl = URL.createObjectURL(file);
+    console.log('Avatar seleccionado:', file.name);
+    console.log('Blob URL creada:', blobUrl);
+
     setAvatar(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarPreview(blobUrl);
     setAvatarError(false); // Resetear error al seleccionar nueva imagen
   };
 
@@ -307,6 +311,14 @@ export default function PerfilPage() {
                 <form onSubmit={handleProfileUpdate} className="space-y-6">
                   {/* Avatar */}
                   <div className="flex items-center gap-6">
+                    {/* Debug info - Remover después */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="hidden">
+                        <p>avatarPreview: {avatarPreview || 'null'}</p>
+                        <p>avatarError: {avatarError.toString()}</p>
+                        <p>isBlob: {avatarPreview?.startsWith('blob:').toString()}</p>
+                      </div>
+                    )}
                     <div className="relative">
                       <div className="w-24 h-24 rounded-full overflow-hidden bg-rola-gray border-2 border-rola-gold">
                         {avatarPreview && !avatarError ? (
@@ -316,7 +328,13 @@ export default function PerfilPage() {
                               src={avatarPreview}
                               alt={name}
                               className="w-full h-full object-cover"
-                              onError={() => setAvatarError(true)}
+                              onError={(e) => {
+                                console.error('Error cargando preview blob:', avatarPreview);
+                                setAvatarError(true);
+                              }}
+                              onLoad={() => {
+                                console.log('Preview blob cargado exitosamente:', avatarPreview);
+                              }}
                             />
                           ) : (
                             // URL de Cloudinary - usar Next.js Image
@@ -326,7 +344,10 @@ export default function PerfilPage() {
                               width={96}
                               height={96}
                               className="w-full h-full object-cover"
-                              onError={() => setAvatarError(true)}
+                              onError={() => {
+                                console.error('Error cargando imagen de Cloudinary:', avatarPreview);
+                                setAvatarError(true);
+                              }}
                             />
                           )
                         ) : (
