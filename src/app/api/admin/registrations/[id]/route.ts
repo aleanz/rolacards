@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export async function PATCH(
   req: NextRequest,
@@ -81,7 +81,7 @@ export async function PATCH(
 
       // Generar nombre único para el archivo
       const fileExtension = paymentProofFile.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
+      const fileName = `${randomUUID()}.${fileExtension}`;
       const filePath = join(uploadsDir, fileName);
 
       // Guardar archivo
