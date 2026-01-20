@@ -61,6 +61,10 @@ export async function sendVerificationEmail(email: string, token: string, name: 
                 padding: 30px;
                 text-align: center;
               }
+              .header img {
+                max-width: 200px;
+                height: auto;
+              }
               .header h1 {
                 color: #ffffff;
                 margin: 0;
@@ -99,7 +103,7 @@ export async function sendVerificationEmail(email: string, token: string, name: 
           <body>
             <div class="container">
               <div class="header">
-                <h1>ROLA CARDS</h1>
+                <img src="${process.env.NEXT_PUBLIC_APP_URL || 'https://rolacards.com'}/logo.png" alt="Rola Cards" />
               </div>
               <div class="content">
                 <h2>¡Bienvenido, ${name}!</h2>
@@ -193,6 +197,10 @@ export async function sendRegistrationNotification(
                 padding: 30px;
                 text-align: center;
               }
+              .header img {
+                max-width: 200px;
+                height: auto;
+              }
               .header h1 {
                 color: #ffffff;
                 margin: 0;
@@ -236,7 +244,7 @@ export async function sendRegistrationNotification(
           <body>
             <div class="container">
               <div class="header">
-                <h1>ROLA CARDS</h1>
+                <img src="${process.env.NEXT_PUBLIC_APP_URL || 'https://rolacards.com'}/logo.png" alt="Rola Cards" />
               </div>
               <div class="content">
                 <h2>Hola, ${userName}</h2>
