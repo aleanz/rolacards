@@ -310,14 +310,25 @@ export default function PerfilPage() {
                     <div className="relative">
                       <div className="w-24 h-24 rounded-full overflow-hidden bg-rola-gray border-2 border-rola-gold">
                         {avatarPreview && !avatarError ? (
-                          <Image
-                            src={avatarPreview}
-                            alt={name}
-                            width={96}
-                            height={96}
-                            className="w-full h-full object-cover"
-                            onError={() => setAvatarError(true)}
-                          />
+                          avatarPreview.startsWith('blob:') ? (
+                            // Preview local - usar <img> normal para blobs
+                            <img
+                              src={avatarPreview}
+                              alt={name}
+                              className="w-full h-full object-cover"
+                              onError={() => setAvatarError(true)}
+                            />
+                          ) : (
+                            // URL de Cloudinary - usar Next.js Image
+                            <Image
+                              src={avatarPreview}
+                              alt={name}
+                              width={96}
+                              height={96}
+                              className="w-full h-full object-cover"
+                              onError={() => setAvatarError(true)}
+                            />
+                          )
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <User className="w-12 h-12 text-gray-600" />
