@@ -12,6 +12,11 @@ const nextConfig = {
         hostname: 'images.ygoprodeck.com',
         pathname: '/images/cards_small/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
     ],
   },
 };
