@@ -330,12 +330,18 @@ enum SettingType {
 // ============================================
 
 model EventRegistration {
-  id            String              @id @default(cuid())
-  status        RegistrationStatus  @default(PENDIENTE)
-  rejectionNote String?             @db.Text
-  konamiId      String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id              String              @id @default(cuid())
+  status          RegistrationStatus  @default(PENDIENTE)
+  rejectionNote   String?             @db.Text
+  konamiId        String?
+  paymentProof    String?             // URL del comprobante de pago (imagen o PDF)
+  paymentProofType String?            // image/jpeg, image/png, application/pdf
+  transferReference String?           // Referencia de transferencia SPEI
+  paymentVerified Boolean             @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?             // ID del staff que verificó el pago
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   userId        String
   user          User                @relation(fields: [userId], references: [id])
@@ -346,6 +352,7 @@ model EventRegistration {
 
   @@unique([userId, eventId])
   @@index([eventId, status])
+  @@index([status])
 }
 
 enum RegistrationStatus {

@@ -15,10 +15,10 @@ export async function GET() {
 
     // Test raw query first
     console.log('[HEALTH] Testing raw query...');
-    const rawResult = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "User"`;
+    const rawResult = await prisma.$queryRaw`SELECT 1 as test`;
     console.log('[HEALTH] Raw query result:', rawResult);
 
-    // Try a simple query
+    // Try simple queries
     console.log('[HEALTH] Testing Prisma queries...');
     const userCount = await prisma.user.count();
     console.log('[HEALTH] User count:', userCount);
@@ -26,29 +26,29 @@ export async function GET() {
     const eventCount = await prisma.event.count();
     console.log('[HEALTH] Event count:', eventCount);
 
-    const settingCount = await prisma.storeSetting.count();
-    console.log('[HEALTH] Setting count:', settingCount);
-
-    // Try to fetch one event
-    console.log('[HEALTH] Fetching one event...');
-    const oneEvent = await prisma.event.findFirst();
-    console.log('[HEALTH] First event:', oneEvent ? { id: oneEvent.id, title: oneEvent.title } : null);
+    const deckCount = await prisma.deck.count();
+    console.log('[HEALTH] Deck count:', deckCount);
 
     return NextResponse.json({
       status: 'ok',
-      database: 'connected',
-      prisma: 'working',
-      rawQuery: 'working',
-      counts: {
-        users: userCount,
-        events: eventCount,
-        settings: settingCount,
+      timestamp: new Date().toISOString(),
+      database: {
+        status: 'connected',
+        prismaWorking: true,
+        rawQueryWorking: true,
+        counts: {
+          users: userCount,
+          events: eventCount,
+          decks: deckCount,
+        },
       },
-      sampleEvent: oneEvent ? { id: oneEvent.id, title: oneEvent.title } : null,
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        hasDatabaseUrl: !!process.env.DATABASE_URL,
-        databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 20) + '...',
+        hasDbUrl: !!process.env.DATABASE_URL,
+        hasNextAuthUrl: !!process.env.NEXTAUTH_URL,
+        hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        hasEmailFrom: !!process.env.EMAIL_FROM,
       },
     });
   } catch (error) {
@@ -62,14 +62,19 @@ export async function GET() {
     return NextResponse.json(
       {
         status: 'error',
-        database: 'disconnected',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        errorName: error instanceof Error ? error.name : 'unknown',
-        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString(),
+        database: {
+          status: 'disconnected',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          errorName: error instanceof Error ? error.name : 'unknown',
+        },
         environment: {
           nodeEnv: process.env.NODE_ENV,
-          hasDatabaseUrl: !!process.env.DATABASE_URL,
-          databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 20) + '...',
+          hasDbUrl: !!process.env.DATABASE_URL,
+          hasNextAuthUrl: !!process.env.NEXTAUTH_URL,
+          hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+          hasResendKey: !!process.env.RESEND_API_KEY,
+          hasEmailFrom: !!process.env.EMAIL_FROM,
         },
       },
       { status: 500 }

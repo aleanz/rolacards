@@ -145,7 +145,7 @@ export default function Header() {
                         Mis Mazos
                       </Link>
                       <Link
-                        href="/inscripciones"
+                        href="/mis-inscripciones"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
                       >

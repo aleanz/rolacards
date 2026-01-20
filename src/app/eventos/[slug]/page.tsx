@@ -13,9 +13,12 @@ import {
   Clock,
   Gamepad2,
 } from 'lucide-react';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import RegistrationForm from '@/components/eventos/RegistrationForm';
 
 interface EventPageProps {
   params: {
@@ -23,7 +26,7 @@ interface EventPageProps {
   };
 }
 
-async function getEvent(slug: string) {
+async function getEvent(slug: string, userId?: string) {
   const event = await prisma.event.findUnique({
     where: { slug },
     include: {
@@ -33,6 +36,19 @@ async function getEvent(slug: string) {
           email: true,
         },
       },
+      registrations: {
+        where: {
+          status: { in: ['PENDIENTE', 'APROBADO'] },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -40,7 +56,8 @@ async function getEvent(slug: string) {
 }
 
 export default async function EventDetailPage({ params }: EventPageProps) {
-  const event = await getEvent(params.slug);
+  const session = await getServerSession(authOptions);
+  const event = await getEvent(params.slug, session?.user?.id);
 
   if (!event || !event.published) {
     notFound();
@@ -49,6 +66,14 @@ export default async function EventDetailPage({ params }: EventPageProps) {
   const eventDate = new Date(event.date);
   const endDate = event.endDate ? new Date(event.endDate) : null;
   const isUpcoming = eventDate > new Date();
+
+  // Verificar si el usuario ya está registrado
+  const userRegistration = session?.user?.id
+    ? event.registrations.find((reg) => reg.user.id === session.user.id)
+    : null;
+
+  // Contar registros aprobados
+  const currentRegistrations = event.registrations.length;
 
   return (
     <>
@@ -216,18 +241,67 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                   )}
                 </div>
 
-                {/* CTA Button */}
-                {isUpcoming && (
+                {/* Registration Status */}
+                {isUpcoming && session?.user?.id && userRegistration && (
+                  <div className="mt-6 pt-6 border-t border-rola-gray">
+                    <div
+                      className={`p-4 rounded-lg text-center ${
+                        userRegistration.status === 'APROBADO'
+                          ? 'bg-green-500/10 border border-green-500/50'
+                          : userRegistration.status === 'PENDIENTE'
+                          ? 'bg-yellow-500/10 border border-yellow-500/50'
+                          : 'bg-red-500/10 border border-red-500/50'
+                      }`}
+                    >
+                      <p
+                        className={`font-medium ${
+                          userRegistration.status === 'APROBADO'
+                            ? 'text-green-500'
+                            : userRegistration.status === 'PENDIENTE'
+                            ? 'text-yellow-500'
+                            : 'text-red-500'
+                        }`}
+                      >
+                        {userRegistration.status === 'APROBADO'
+                          ? '✓ Inscripción Aprobada'
+                          : userRegistration.status === 'PENDIENTE'
+                          ? '⏳ Solicitud Pendiente'
+                          : '✗ Solicitud Rechazada'}
+                      </p>
+                      {userRegistration.status === 'RECHAZADO' &&
+                        userRegistration.rejectionNote && (
+                          <p className="text-sm text-gray-400 mt-2">
+                            {userRegistration.rejectionNote}
+                          </p>
+                        )}
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA Button - Only if not logged in */}
+                {isUpcoming && !session?.user?.id && (
                   <div className="mt-6 pt-6 border-t border-rola-gray">
                     <Link
-                      href="/contacto"
+                      href="/auth/login?callbackUrl=/eventos"
                       className="btn btn-primary w-full justify-center"
                     >
-                      Inscribirse al Evento
+                      Inicia sesión para inscribirte
                     </Link>
                   </div>
                 )}
               </div>
+
+              {/* Registration Form - Only if logged in and not registered yet */}
+              {isUpcoming && session?.user?.id && !userRegistration && (
+                <RegistrationForm
+                  eventId={event.id}
+                  eventFormat={event.format}
+                  entryFee={event.entryFee?.toString() || null}
+                  maxPlayers={event.maxPlayers}
+                  currentRegistrations={currentRegistrations}
+                  userId={session.user.id}
+                />
+              )}
             </div>
           </div>
         </div>

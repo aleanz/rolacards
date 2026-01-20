@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   Menu,
   BarChart3,
+  FileCheck,
 } from 'lucide-react';
 
 const menuItems = [
@@ -56,6 +57,12 @@ const menuItems = [
     icon: Calendar,
   },
   {
+    name: 'Solicitudes',
+    href: '/admin/solicitudes',
+    icon: FileCheck,
+    showBadge: true,
+  },
+  {
     name: 'Buscador de Cartas',
     href: '/admin/buscador-cartas',
     icon: CreditCard,
@@ -76,6 +83,26 @@ interface SidebarProps {
 export default function Sidebar({ user, onSignOut, isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch('/api/admin/registrations?status=PENDIENTE');
+        if (!response.ok) return;
+        const data = await response.json();
+        setPendingCount(data.registrations.length);
+      } catch (error) {
+        console.error('Error fetching pending count:', error);
+      }
+    };
+
+    fetchPendingCount();
+
+    // Actualizar cada 30 segundos
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -135,26 +162,37 @@ export default function Sidebar({ user, onSignOut, isCollapsed, setIsCollapsed }
             <ul className="space-y-1">
               {menuItems.map((item) => {
                 const isActive = pathname === item.href;
+                const showNotification = item.showBadge && pendingCount > 0;
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group',
+                        'flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group relative',
                         isActive
                           ? 'bg-rola-gold text-rola-black font-medium'
                           : 'text-gray-400 hover:text-white hover:bg-rola-gray/50'
                       )}
                       title={isCollapsed ? item.name : undefined}
                     >
-                      <item.icon
-                        className={cn(
-                          'w-5 h-5 flex-shrink-0',
-                          isActive ? 'text-rola-black' : 'group-hover:scale-110 transition-transform'
+                      <div className="relative">
+                        <item.icon
+                          className={cn(
+                            'w-5 h-5 flex-shrink-0',
+                            isActive ? 'text-rola-black' : 'group-hover:scale-110 transition-transform'
+                          )}
+                        />
+                        {showNotification && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                         )}
-                      />
-                      <span className={cn(isCollapsed && 'lg:hidden')}>{item.name}</span>
+                      </div>
+                      <span className={cn('flex-1', isCollapsed && 'lg:hidden')}>{item.name}</span>
+                      {showNotification && !isCollapsed && (
+                        <span className="px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                          {pendingCount}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );

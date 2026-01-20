@@ -89,8 +89,16 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Register error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+
+    // Return more detailed error in development
+    const isDevelopment = process.env.NODE_ENV === 'development';
     return NextResponse.json(
-      { error: 'Error al registrar usuario' },
+      {
+        error: 'Error al registrar usuario',
+        ...(isDevelopment && { details: error instanceof Error ? error.message : String(error) })
+      },
       { status: 500 }
     );
   }
