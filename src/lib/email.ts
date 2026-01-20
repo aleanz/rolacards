@@ -103,7 +103,7 @@ export async function sendVerificationEmail(email: string, token: string, name: 
           <body>
             <div class="container">
               <div class="header">
-                <img src="${process.env.NEXT_PUBLIC_APP_URL || 'https://rolacards.com'}/logo.png" alt="Rola Cards" />
+                <img src="https://rolacards.com/logo.png" alt="Rola Cards" onerror="this.onerror=null; this.outerHTML='<h1 style=&quot;color: #ffffff; margin: 0; font-size: 28px;&quot;>ROLA CARDS</h1>';" />
               </div>
               <div class="content">
                 <h2>¡Bienvenido, ${name}!</h2>
@@ -249,7 +249,7 @@ export async function sendRegistrationNotification(
           <body>
             <div class="container">
               <div class="header">
-                <img src="${process.env.NEXT_PUBLIC_APP_URL || 'https://rolacards.com'}/logo.png" alt="Rola Cards" />
+                <img src="https://rolacards.com/logo.png" alt="Rola Cards" onerror="this.onerror=null; this.outerHTML='<h1 style=&quot;color: #ffffff; margin: 0; font-size: 28px;&quot;>ROLA CARDS</h1>';" />
               </div>
               <div class="content">
                 <h2>Hola, ${userName}</h2>
