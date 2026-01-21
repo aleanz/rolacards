@@ -378,12 +378,12 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
 
       <div className="bg-rola-black border border-rola-gray rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-rola-gray flex items-center justify-between">
+        <div className="p-4 md:p-6 border-b border-rola-gray flex items-center justify-between">
           <div>
-            <h3 className="font-display text-xl font-bold text-white">
+            <h3 className="font-display text-lg md:text-xl font-bold text-white">
               Buscar Cartas
             </h3>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-xs md:text-sm text-gray-400 mt-1">
               Agregando a: {deckType === 'MAIN' ? 'Main Deck' : deckType === 'EXTRA' ? 'Extra Deck' : 'Side Deck'}
             </p>
           </div>
@@ -396,8 +396,8 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
         </div>
 
         {/* Search Bar */}
-        <div className="p-6 border-b border-rola-gray space-y-4">
-          <div className="flex gap-3">
+        <div className="p-4 md:p-6 border-b border-rola-gray space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <input
                 type="text"
@@ -405,32 +405,34 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Nombre de la carta..."
-                className="input w-full pl-10"
+                className="input w-full pl-10 text-base md:text-sm h-12 md:h-auto"
                 autoFocus
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-outline"
-            >
-              <Filter className="w-5 h-5" />
-              Filtros
-            </button>
-            <button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="btn btn-primary"
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Buscando...
-                </>
-              ) : (
-                'Buscar'
-              )}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="btn btn-outline flex-1 sm:flex-none h-12 md:h-auto"
+              >
+                <Filter className="w-5 h-5" />
+                <span className="sm:inline">Filtros</span>
+              </button>
+              <button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="btn btn-primary flex-1 sm:flex-none h-12 md:h-auto"
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="sm:inline">Buscando...</span>
+                  </>
+                ) : (
+                  'Buscar'
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Advanced Filters */}
@@ -567,13 +569,13 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
         </div>
 
         {/* Results */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {searchResults.length > 0 ? (
             <>
-              <div className="mb-4 text-gray-400 text-sm">
+              <div className="mb-4 text-gray-400 text-xs md:text-sm">
                 Se encontraron {searchResults.length} carta{searchResults.length !== 1 ? 's' : ''}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-4">
                 {searchResults.map((card) => {
                   const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison'];
                   const banlistFormat: Format = format && validFormats.includes(format) ? (format as Format) : '';

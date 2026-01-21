@@ -77,9 +77,9 @@ export default function CardInDeck({
   };
 
   return (
-    <div className="flex items-center gap-3 p-2 bg-rola-gray/20 rounded-lg hover:bg-rola-gray/30 transition-colors group">
+    <div className="flex items-center gap-2 md:gap-3 p-2 bg-rola-gray/20 rounded-lg hover:bg-rola-gray/30 transition-colors group">
       {/* Card Image */}
-      <div className="relative w-12 h-16 flex-shrink-0 rounded overflow-hidden">
+      <div className="relative w-10 h-14 md:w-12 md:h-16 flex-shrink-0 rounded overflow-hidden">
         {cardData?.card_images?.[0]?.image_url ? (
           <Image
             src={cardData.card_images[0].image_url}
@@ -96,32 +96,32 @@ export default function CardInDeck({
 
       {/* Card Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white truncate">
+        <p className="text-xs md:text-sm font-medium text-white truncate">
           {cardData?.name || 'Unknown Card'}
         </p>
-        <p className="text-xs text-gray-400 truncate">
+        <p className="text-[10px] md:text-xs text-gray-400 truncate">
           {cardData?.type || 'Unknown Type'}
         </p>
       </div>
 
       {/* Quantity Controls */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
         <button
           onClick={handleDecrease}
-          className="w-6 h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center"
+          className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center"
           aria-label="Decrease quantity"
         >
           <Minus className="w-3 h-3" />
         </button>
 
-        <span className="text-sm font-medium text-white w-6 text-center">
+        <span className="text-sm font-medium text-white w-5 md:w-6 text-center">
           {card.quantity}
         </span>
 
         <button
           onClick={handleIncrease}
           disabled={card.quantity >= effectiveMax}
-          className="w-6 h-6 rounded bg-rola-gray/50 hover:bg-rola-gold/20 text-gray-400 hover:text-rola-gold transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-rola-gold/20 text-gray-400 hover:text-rola-gold transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Increase quantity"
           title={card.quantity >= effectiveMax ? 'Límite alcanzado (banlist)' : 'Aumentar cantidad'}
         >
@@ -130,7 +130,7 @@ export default function CardInDeck({
 
         <button
           onClick={() => onRemove(card.cardId)}
-          className="w-6 h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center ml-1 opacity-0 group-hover:opacity-100"
+          className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center ml-0.5 md:ml-1 md:opacity-0 md:group-hover:opacity-100"
           aria-label="Remove card"
         >
           <X className="w-3 h-3" />

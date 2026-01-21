@@ -79,21 +79,21 @@ export default function NuevoMazoPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen pt-24 pb-20">
-        <div className="container-custom">
+      <main className="min-h-screen pt-20 md:pt-24 pb-16 md:pb-20">
+        <div className="container-custom px-3 md:px-6">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <Link
               href="/mazos"
-              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-rola-gold transition-colors mb-4"
+              className="inline-flex items-center gap-2 text-xs md:text-sm text-gray-400 hover:text-rola-gold transition-colors mb-3 md:mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
               Volver a mis mazos
             </Link>
-            <h1 className="font-display text-4xl font-bold text-white mb-2">
+            <h1 className="font-display text-2xl md:text-4xl font-bold text-white mb-2">
               Crear Nuevo Mazo
             </h1>
-            <p className="text-gray-400">
+            <p className="text-sm md:text-base text-gray-400">
               Construye tu mazo agregando cartas del Main, Extra y Side Deck
             </p>
           </div>

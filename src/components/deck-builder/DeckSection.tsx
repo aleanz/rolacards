@@ -55,23 +55,23 @@ export default function DeckSection({
   const isValid = type === 'MAIN' ? cardCount >= info.min && cardCount <= info.max : cardCount <= info.max;
 
   return (
-    <div className={`border rounded-lg p-4 ${info.bgColor}`}>
+    <div className={`border rounded-lg p-3 md:p-4 ${info.bgColor}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className={`font-display text-lg font-bold ${info.color}`}>
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <div className="min-w-0 flex-1 pr-2">
+          <h3 className={`font-display text-base md:text-lg font-bold ${info.color}`}>
             {info.title}
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-xs md:text-sm text-gray-400 truncate">
             {cardCount} / {type === 'MAIN' ? `${info.min}-${info.max}` : info.max} cartas
             {!isValid && type === 'MAIN' && cardCount < info.min && (
-              <span className="text-red-400 ml-2">
-                (Mínimo {info.min})
+              <span className="text-red-400 ml-1 md:ml-2">
+                (Mín {info.min})
               </span>
             )}
             {!isValid && cardCount > info.max && (
-              <span className="text-red-400 ml-2">
-                (Máximo {info.max})
+              <span className="text-red-400 ml-1 md:ml-2">
+                (Máx {info.max})
               </span>
             )}
           </p>
@@ -80,10 +80,10 @@ export default function DeckSection({
         <button
           onClick={onAddCard}
           disabled={isAtMax}
-          className="btn btn-sm btn-outline disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn btn-sm btn-outline disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Agregar
+          <span className="hidden sm:inline">Agregar</span>
         </button>
       </div>
 
