@@ -117,6 +117,7 @@ export default function BuscadorCartasPage() {
 
   // Filtros
   const [searchName, setSearchName] = useState('');
+  const [searchDescription, setSearchDescription] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedAttribute, setSelectedAttribute] = useState('');
   const [selectedRace, setSelectedRace] = useState('');
@@ -147,6 +148,7 @@ export default function BuscadorCartasPage() {
       const params: string[] = ['misc=yes'];
 
       if (searchName) params.push(`fname=${encodeURIComponent(searchName)}`);
+      if (searchDescription) params.push(`desc=${encodeURIComponent(searchDescription)}`);
       if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
       if (selectedAttribute) params.push(`attribute=${selectedAttribute}`);
       if (selectedRace) params.push(`race=${encodeURIComponent(selectedRace)}`);
@@ -172,6 +174,7 @@ export default function BuscadorCartasPage() {
 
   const clearFilters = () => {
     setSearchName('');
+    setSearchDescription('');
     setSelectedType('');
     setSelectedAttribute('');
     setSelectedRace('');
@@ -252,6 +255,21 @@ export default function BuscadorCartasPage() {
                       onChange={(e) => setSearchName(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Ej: Dark Magician"
+                      className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
+                    />
+                  </div>
+
+                  {/* Texto en descripción */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Texto en descripción
+                    </label>
+                    <input
+                      type="text"
+                      value={searchDescription}
+                      onChange={(e) => setSearchDescription(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Ej: destroy, negate"
                       className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
                     />
                   </div>
@@ -416,7 +434,7 @@ export default function BuscadorCartasPage() {
                   ))}
                 </div>
               </div>
-            ) : searchName || selectedType || selectedAttribute || selectedRace || selectedLevel || selectedArchetype ? (
+            ) : searchName || searchDescription || selectedType || selectedAttribute || selectedRace || selectedLevel || selectedArchetype ? (
               <div className="text-center py-12 card">
                 <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-400">No se encontraron cartas con esos filtros</p>
