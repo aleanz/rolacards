@@ -173,15 +173,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-rola-gold/5 border border-rola-gold/20">
-            <p className="text-xs text-gray-400 mb-2 font-medium">Usuarios de prueba:</p>
-            <div className="space-y-1 text-xs text-gray-500">
-              <p>👤 Admin: admin@rolacards.com / admin123</p>
-              <p>👤 Staff: staff@rolacards.com / staff123</p>
-            </div>
-          </div>
-
           {/* Back to home */}
           <div className="mt-4 text-center">
             <Link
