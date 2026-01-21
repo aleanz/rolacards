@@ -86,7 +86,6 @@ const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 export default function CardSearch({ deckType, format, currentCards, onCardSelect, onClose }: CardSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchDescription, setSearchDescription] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedAttribute, setSelectedAttribute] = useState('');
   const [selectedRace, setSelectedRace] = useState('');
@@ -128,7 +127,7 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
   };
 
   const handleSearch = async () => {
-    if (!searchTerm.trim() && !searchDescription.trim() && !selectedType && !selectedAttribute && !selectedRace && !selectedLevel && !selectedArchetype) {
+    if (!searchTerm.trim() && !selectedType && !selectedAttribute && !selectedRace && !selectedLevel && !selectedArchetype) {
       setError('Ingresa al menos un criterio de búsqueda');
       return;
     }
@@ -141,8 +140,11 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
       let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
       const params: string[] = ['misc=yes']; // Include banlist info
 
-      if (searchTerm.trim()) params.push(`fname=${encodeURIComponent(searchTerm)}`);
-      if (searchDescription.trim()) params.push(`desc=${encodeURIComponent(searchDescription)}`);
+      // Buscar tanto en nombre como en descripción con el mismo término
+      if (searchTerm.trim()) {
+        params.push(`fname=${encodeURIComponent(searchTerm)}`);
+        params.push(`desc=${encodeURIComponent(searchTerm)}`);
+      }
       if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
       if (selectedAttribute) params.push(`attribute=${selectedAttribute}`);
       if (selectedRace) params.push(`race=${encodeURIComponent(selectedRace)}`);
@@ -326,7 +328,6 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSearchDescription('');
     setSelectedType('');
     setSelectedAttribute('');
     setSelectedRace('');
@@ -404,7 +405,7 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Nombre de la carta..."
+                placeholder="Nombre o descripción de la carta..."
                 className="input w-full pl-10 text-base md:text-sm h-12 md:h-auto"
                 autoFocus
               />
@@ -439,21 +440,6 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
           {showFilters && (
             <div className="space-y-4 pt-4 border-t border-rola-gray">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Búsqueda en descripción */}
-                <div className="sm:col-span-2 lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Texto en descripción
-                  </label>
-                  <input
-                    type="text"
-                    value={searchDescription}
-                    onChange={(e) => setSearchDescription(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Buscar en el texto de la carta..."
-                    className="input w-full"
-                  />
-                </div>
-
                 {/* Tipo */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
