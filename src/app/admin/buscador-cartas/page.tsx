@@ -142,28 +142,42 @@ export default function BuscadorCartasPage() {
   const searchCards = async () => {
     setIsLoading(true);
     try {
-      let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
-      const params: string[] = ['misc=yes'];
+      // Si solo hay searchTerm sin otros filtros, hacer dos búsquedas paralelas
+      if (searchTerm && !selectedType && !selectedAttribute && !selectedRace && !selectedLevel && !selectedArchetype) {
+        const [nameResults, descResults] = await Promise.all([
+          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes&fname=${encodeURIComponent(searchTerm)}`)
+            .then(r => r.ok ? r.json() : { data: [] }),
+          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes&desc=${encodeURIComponent(searchTerm)}`)
+            .then(r => r.ok ? r.json() : { data: [] })
+        ]);
 
-      // Buscar tanto en nombre como en descripción con el mismo término
-      if (searchTerm) {
-        params.push(`fname=${encodeURIComponent(searchTerm)}`);
-        params.push(`desc=${encodeURIComponent(searchTerm)}`);
-      }
-      if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
-      if (selectedAttribute) params.push(`attribute=${selectedAttribute}`);
-      if (selectedRace) params.push(`race=${encodeURIComponent(selectedRace)}`);
-      if (selectedLevel) params.push(`level=${selectedLevel}`);
-      if (selectedArchetype) params.push(`archetype=${encodeURIComponent(selectedArchetype)}`);
-
-      url += params.join('&');
-
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setCards(data.data || []);
+        // Combinar resultados y eliminar duplicados
+        const allResults = [...(nameResults.data || []), ...(descResults.data || [])];
+        const uniqueCards = Array.from(
+          new Map(allResults.map(card => [card.id, card])).values()
+        );
+        setCards(uniqueCards);
       } else {
-        setCards([]);
+        // Si hay filtros adicionales, solo buscar por nombre
+        let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
+        const params: string[] = ['misc=yes'];
+
+        if (searchTerm) params.push(`fname=${encodeURIComponent(searchTerm)}`);
+        if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
+        if (selectedAttribute) params.push(`attribute=${selectedAttribute}`);
+        if (selectedRace) params.push(`race=${encodeURIComponent(selectedRace)}`);
+        if (selectedLevel) params.push(`level=${selectedLevel}`);
+        if (selectedArchetype) params.push(`archetype=${encodeURIComponent(selectedArchetype)}`);
+
+        url += params.join('&');
+
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          setCards(data.data || []);
+        } else {
+          setCards([]);
+        }
       }
     } catch (error) {
       console.error('Error searching cards:', error);

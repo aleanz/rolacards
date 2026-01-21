@@ -136,39 +136,57 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
     setError('');
 
     try {
-      // Build API URL with filters
-      let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
-      const params: string[] = ['misc=yes']; // Include banlist info
+      let allCards: YGOCard[] = [];
 
-      // Buscar tanto en nombre como en descripción con el mismo término
-      if (searchTerm.trim()) {
-        params.push(`fname=${encodeURIComponent(searchTerm)}`);
-        params.push(`desc=${encodeURIComponent(searchTerm)}`);
-      }
-      if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
-      if (selectedAttribute) params.push(`attribute=${selectedAttribute}`);
-      if (selectedRace) params.push(`race=${encodeURIComponent(selectedRace)}`);
-      if (selectedLevel) params.push(`level=${selectedLevel}`);
-      if (selectedArchetype) params.push(`archetype=${encodeURIComponent(selectedArchetype)}`);
+      // Si solo hay searchTerm sin otros filtros, hacer dos búsquedas paralelas
+      if (searchTerm.trim() && !selectedType && !selectedAttribute && !selectedRace && !selectedLevel && !selectedArchetype) {
+        const [nameResults, descResults] = await Promise.all([
+          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes&fname=${encodeURIComponent(searchTerm)}`)
+            .then(r => r.ok ? r.json() : { data: [] })
+            .catch(() => ({ data: [] })),
+          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes&desc=${encodeURIComponent(searchTerm)}`)
+            .then(r => r.ok ? r.json() : { data: [] })
+            .catch(() => ({ data: [] }))
+        ]);
 
-      url += params.join('&');
+        // Combinar resultados y eliminar duplicados
+        const allResults = [...(nameResults.data || []), ...(descResults.data || [])];
+        const uniqueCards = Array.from(
+          new Map(allResults.map((card: YGOCard) => [card.id, card])).values()
+        );
+        allCards = uniqueCards;
+      } else {
+        // Si hay filtros adicionales, solo buscar por nombre
+        let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
+        const params: string[] = ['misc=yes']; // Include banlist info
 
-      const response = await fetch(url);
+        if (searchTerm.trim()) params.push(`fname=${encodeURIComponent(searchTerm)}`);
+        if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
+        if (selectedAttribute) params.push(`attribute=${selectedAttribute}`);
+        if (selectedRace) params.push(`race=${encodeURIComponent(selectedRace)}`);
+        if (selectedLevel) params.push(`level=${selectedLevel}`);
+        if (selectedArchetype) params.push(`archetype=${encodeURIComponent(selectedArchetype)}`);
 
-      if (!response.ok) {
-        if (response.status === 400) {
-          setError('No se encontraron cartas con esos criterios. Intenta con otros filtros.');
-          setSearchResults([]);
-          setIsSearching(false);
-          return;
+        url += params.join('&');
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          if (response.status === 400) {
+            setError('No se encontraron cartas con esos criterios. Intenta con otros filtros.');
+            setSearchResults([]);
+            setIsSearching(false);
+            return;
+          }
+          throw new Error('Error al buscar cartas');
         }
-        throw new Error('Error al buscar cartas');
-      }
 
-      const data = await response.json();
+        const data = await response.json();
+        allCards = data.data || [];
+      }
 
       // Filter cards based on deck type
-      let filteredCards = data.data || [];
+      let filteredCards = allCards;
 
       // Tipos de cartas del Extra Deck (incluyendo variantes con Pendulum y Effect)
       const EXTRA_DECK_TYPES = [
