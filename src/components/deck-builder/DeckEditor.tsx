@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Save, Loader2, AlertTriangle, X } from 'lucide-react';
 import DeckSection from './DeckSection';
 import CardSearch from './CardSearch';
@@ -126,14 +127,14 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
     const canAdd = canAddCard({ id: deckId, name, description, format, cards }, card.id, activeSection);
 
     if (!canAdd && activeSection !== 'EXTRA') {
-      alert('Ya tienes 3 copias de esta carta en Main + Side Deck');
+      toast.error('Ya tienes 3 copias de esta carta en Main + Side Deck');
       return;
     }
 
     // Check remaining slots
     const remaining = getRemainingSlots(cards, activeSection);
     if (remaining === 0) {
-      alert(`El ${activeSection} Deck ya está lleno`);
+      toast.error(`El ${activeSection} Deck ya está lleno`);
       return;
     }
 
@@ -174,8 +175,10 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
 
   const handleSave = async () => {
     if (!validation.valid) {
-      const errorMessages = validation.errors.map(e => e.message).join('\n');
-      alert(`El mazo tiene errores:\n\n${errorMessages}\n\nPor favor corrígelos antes de guardar.`);
+      const errorMessages = validation.errors.map(e => e.message).join('\n• ');
+      toast.error(`El mazo tiene errores:\n\n• ${errorMessages}\n\nPor favor corrígelos antes de guardar.`, {
+        duration: 6000,
+      });
       return;
     }
 
@@ -184,10 +187,12 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
 
     try {
       await onSave({ id: deckId, name, description, format, cards });
+      toast.success('Mazo guardado correctamente');
     } catch (error) {
       console.error('Save error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       setSaveError(`Error al guardar el mazo: ${errorMessage}`);
+      toast.error(`Error al guardar el mazo: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
@@ -261,7 +266,7 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
             allCards={cards}
             onAddCard={() => {
               if (!format) {
-                alert('Por favor selecciona un formato (TCG/OCG) antes de agregar cartas.');
+                toast.error('Por favor selecciona un formato (TCG/OCG) antes de agregar cartas.');
                 return;
               }
               setActiveSection('MAIN');

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 import {
   Calendar,
   Plus,
@@ -70,6 +71,14 @@ const EVENT_TYPES = [
   { value: 'LOCALS', label: 'Locals' },
   { value: 'SPECIAL_EVENT', label: 'Evento Especial' },
   { value: 'ANNOUNCEMENT', label: 'Anuncio' },
+];
+
+const EVENT_FORMATS = [
+  { value: 'avanzado', label: 'Avanzado' },
+  { value: 'ocg', label: 'OCG' },
+  { value: 'goat', label: 'GOAT' },
+  { value: 'edison', label: 'Edison' },
+  { value: 'genesys', label: 'Genesys' },
 ];
 
 export default function EventosPage() {
@@ -234,24 +243,29 @@ export default function EventosPage() {
   };
 
   const handleDelete = async (eventId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este evento?')) {
-      return;
-    }
+    const deletePromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(`/api/events/${eventId}`, {
+          method: 'DELETE',
+        });
 
-    try {
-      const response = await fetch(`/api/events/${eventId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        await fetchEvents();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Error al eliminar evento');
+        if (response.ok) {
+          await fetchEvents();
+          resolve('Evento eliminado correctamente');
+        } else {
+          const error = await response.json();
+          reject(error.error || 'Error al eliminar evento');
+        }
+      } catch (error) {
+        reject('Error al eliminar evento');
       }
-    } catch (error) {
-      alert('Error al eliminar evento');
-    }
+    });
+
+    toast.promise(deletePromise, {
+      loading: 'Eliminando evento...',
+      success: (msg) => msg as string,
+      error: (err) => err as string,
+    });
   };
 
   const filteredEvents = events.filter(
@@ -584,13 +598,18 @@ export default function EventosPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Formato</label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.format}
                     onChange={(e) => setFormData({ ...formData, format: e.target.value })}
-                    className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
-                    placeholder="Ej: Swiss, Single Elimination"
-                  />
+                    className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white focus:outline-none focus:border-rola-gold transition-colors"
+                  >
+                    <option value="">Seleccionar formato</option>
+                    {EVENT_FORMATS.map((format) => (
+                      <option key={format.value} value={format.value}>
+                        {format.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import SessionProvider from '@/components/providers/SessionProvider';
 import { Analytics } from '@vercel/analytics/react';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: {
@@ -59,6 +60,35 @@ export default function RootLayout({
           <div className="relative z-10">
             {children}
           </div>
+
+          {/* Toast notifications */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #2a2a2a',
+                borderRadius: '0.5rem',
+                padding: '1rem',
+              },
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: '#d4af37',
+                  secondary: '#1a1a1a',
+                },
+              },
+              error: {
+                duration: 5000,
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#1a1a1a',
+                },
+              },
+            }}
+          />
         </SessionProvider>
         <Analytics />
       </body>

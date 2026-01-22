@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import { ArrowLeft, Edit, Trash2, Loader2, Calendar } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -65,28 +66,34 @@ export default function DeckViewPage({ params }: { params: { id: string } }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este mazo?')) {
-      return;
-    }
-
     setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/decks/${params.id}`, {
-        method: 'DELETE',
-      });
 
-      if (response.ok) {
-        router.push('/mazos');
-      } else {
-        const data = await response.json();
-        alert(data.error || 'Error al eliminar el mazo');
+    const deletePromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(`/api/decks/${params.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          resolve('Mazo eliminado correctamente');
+          router.push('/mazos');
+        } else {
+          const data = await response.json();
+          reject(data.error || 'Error al eliminar el mazo');
+        }
+      } catch (error) {
+        console.error('Error deleting deck:', error);
+        reject('Error al eliminar el mazo');
+      } finally {
+        setIsDeleting(false);
       }
-    } catch (error) {
-      console.error('Error deleting deck:', error);
-      alert('Error al eliminar el mazo');
-    } finally {
-      setIsDeleting(false);
-    }
+    });
+
+    toast.promise(deletePromise, {
+      loading: 'Eliminando mazo...',
+      success: (msg) => msg as string,
+      error: (err) => err as string,
+    });
   };
 
   if (status === 'loading' || isLoading) {

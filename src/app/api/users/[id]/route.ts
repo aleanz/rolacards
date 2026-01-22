@@ -24,6 +24,7 @@ export async function GET(
         name: true,
         role: true,
         avatar: true,
+        emailVerified: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -77,6 +78,7 @@ export async function PATCH(
         name: true,
         role: true,
         avatar: true,
+        emailVerified: true,
         updatedAt: true,
       },
     });

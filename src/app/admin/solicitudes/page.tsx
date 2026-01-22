@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   Users,
   Calendar,
@@ -115,8 +116,10 @@ export default function SolicitudesPage() {
       setSelectedRegistration(null);
       setRejectionNote('');
       setPaymentProofFile(null);
+
+      toast.success(status === 'APROBADO' ? 'Solicitud aprobada correctamente' : 'Solicitud rechazada');
     } catch (error: any) {
-      alert(error.message || 'Error al procesar la solicitud');
+      toast.error(error.message || 'Error al procesar la solicitud');
     } finally {
       setProcessingId(null);
     }

@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
         name: true,
         role: true,
         avatar: true,
+        emailVerified: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -28,7 +29,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(users);
+    return NextResponse.json(users, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: 'Error al obtener usuarios' }, { status: 500 });
@@ -79,6 +84,7 @@ export async function POST(request: NextRequest) {
         name: true,
         role: true,
         avatar: true,
+        emailVerified: true,
         createdAt: true,
       },
     });

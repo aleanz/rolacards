@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 import {
   Users as UsersIcon,
   Plus,
@@ -21,6 +22,7 @@ interface User {
   name: string;
   role: string;
   avatar: string | null;
+  emailVerified: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -29,7 +31,7 @@ interface UserFormData {
   email: string;
   password: string;
   name: string;
-  role: 'ADMIN' | 'STAFF';
+  role: 'ADMIN' | 'STAFF' | 'CLIENTE';
   avatar: string;
 }
 
@@ -57,7 +59,9 @@ export default function UsuariosPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/users', {
+        cache: 'no-store',
+      });
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -113,7 +117,7 @@ export default function UsuariosPage() {
         email: user.email,
         password: '',
         name: user.name,
-        role: user.role as 'ADMIN' | 'STAFF',
+        role: user.role as 'ADMIN' | 'STAFF' | 'CLIENTE',
         avatar: user.avatar || '',
       });
       setAvatarPreview(user.avatar || '');
@@ -179,24 +183,30 @@ export default function UsuariosPage() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-      return;
-    }
+    // Usar toast.promise para mejor UX
+    const deletePromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'DELETE',
+        });
 
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        await fetchUsers();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Error al eliminar usuario');
+        if (response.ok) {
+          await fetchUsers();
+          resolve('Usuario eliminado correctamente');
+        } else {
+          const error = await response.json();
+          reject(error.error || 'Error al eliminar usuario');
+        }
+      } catch (error) {
+        reject('Error al eliminar usuario');
       }
-    } catch (error) {
-      alert('Error al eliminar usuario');
-    }
+    });
+
+    toast.promise(deletePromise, {
+      loading: 'Eliminando usuario...',
+      success: (msg) => msg as string,
+      error: (err) => err as string,
+    });
   };
 
   const filteredUsers = users.filter(
@@ -269,17 +279,24 @@ export default function UsuariosPage() {
                 </div>
               </div>
 
-              {/* Role Badge */}
-              <div className="mb-4">
+              {/* Role Badge & Email Verification */}
+              <div className="mb-4 flex flex-wrap gap-2">
                 <span
                   className={`inline-block px-2 py-1 text-xs rounded ${
                     user.role === 'ADMIN'
                       ? 'bg-rola-gold/20 text-rola-gold'
-                      : 'bg-blue-500/20 text-blue-400'
+                      : user.role === 'STAFF'
+                      ? 'bg-blue-500/20 text-blue-400'
+                      : 'bg-purple-500/20 text-purple-400'
                   }`}
                 >
                   {user.role}
                 </span>
+                {user.role === 'CLIENTE' && !user.emailVerified && (
+                  <span className="inline-block px-2 py-1 text-xs rounded bg-yellow-500/20 text-yellow-500">
+                    ⚠️ No verificado
+                  </span>
+                )}
               </div>
 
               {/* Actions */}
@@ -417,14 +434,69 @@ export default function UsuariosPage() {
                 <select
                   value={formData.role}
                   onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'STAFF' })
+                    setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'STAFF' | 'CLIENTE' })
                   }
                   className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white focus:outline-none focus:border-rola-gold transition-colors"
                 >
+                  <option value="CLIENTE">Cliente</option>
                   <option value="STAFF">Staff</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>
+
+              {/* Verificación de email - solo para clientes no verificados */}
+              {editingUser && editingUser.role === 'CLIENTE' && !editingUser.emailVerified && (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                  <p className="text-sm text-yellow-500 mb-3">
+                    ⚠️ Email no verificado. El usuario no podrá iniciar sesión hasta verificar su email.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const verifyPromise = new Promise(async (resolve, reject) => {
+                        try {
+                          const response = await fetch(`/api/users/${editingUser.id}/verify-email`, {
+                            method: 'POST',
+                          });
+                          if (response.ok) {
+                            // Actualizar el estado del usuario que se está editando
+                            const updatedUser = {
+                              ...editingUser,
+                              emailVerified: true,
+                            };
+                            setEditingUser(updatedUser);
+
+                            // Actualizar también la lista de usuarios con un nuevo array
+                            setUsers(prevUsers =>
+                              prevUsers.map(u =>
+                                u.id === editingUser.id
+                                  ? { ...u, emailVerified: true }
+                                  : u
+                              )
+                            );
+
+                            resolve('Email verificado correctamente');
+                          } else {
+                            const error = await response.json();
+                            reject(error.error || 'Error al verificar email');
+                          }
+                        } catch (error) {
+                          reject('Error al verificar email');
+                        }
+                      });
+
+                      toast.promise(verifyPromise, {
+                        loading: 'Verificando email...',
+                        success: (msg) => msg as string,
+                        error: (err) => err as string,
+                      });
+                    }}
+                    className="btn btn-sm btn-outline w-full"
+                  >
+                    ✓ Verificar Email Manualmente
+                  </button>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={handleCloseModal} className="flex-1 btn btn-ghost">

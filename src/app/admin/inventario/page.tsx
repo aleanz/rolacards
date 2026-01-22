@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 import {
   Package,
   Plus,
@@ -406,24 +407,29 @@ export default function InventarioPage() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) {
-      return;
-    }
+    const deletePromise = new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(`/api/inventory/${productId}`, {
+          method: 'DELETE',
+        });
 
-    try {
-      const response = await fetch(`/api/inventory/${productId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        await fetchProducts();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Error al eliminar producto');
+        if (response.ok) {
+          await fetchProducts();
+          resolve('Producto eliminado correctamente');
+        } else {
+          const error = await response.json();
+          reject(error.error || 'Error al eliminar producto');
+        }
+      } catch (error) {
+        reject('Error al eliminar producto');
       }
-    } catch (error) {
-      alert('Error al eliminar producto');
-    }
+    });
+
+    toast.promise(deletePromise, {
+      loading: 'Eliminando producto...',
+      success: (msg) => msg as string,
+      error: (err) => err as string,
+    });
   };
 
   const filteredProducts = products.filter(
