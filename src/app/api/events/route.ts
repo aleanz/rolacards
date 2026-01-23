@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     console.log('[API /api/events] Starting request');
     console.log('[API /api/events] URL:', request.url);
 
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
     const { searchParams } = new URL(request.url);
     const published = searchParams.get('published');
     const featured = searchParams.get('featured');
@@ -51,16 +54,38 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        registrations: userId ? {
+          where: {
+            userId: userId,
+          },
+          select: {
+            id: true,
+            status: true,
+          },
+        } : false,
       },
       orderBy: {
         date: 'asc',
       },
     });
 
+    // Transformar datos para incluir el estado de inscripción
+    const eventsWithRegistration = events.map(event => {
+      const userRegistration = userId && event.registrations && event.registrations.length > 0
+        ? event.registrations[0]
+        : null;
+
+      return {
+        ...event,
+        userRegistrationStatus: userRegistration?.status || null,
+        registrations: undefined, // No enviar las inscripciones completas al cliente
+      };
+    });
+
     console.log('[API /api/events] Found events:', events.length);
     console.log('[API /api/events] Success, returning events');
 
-    return NextResponse.json(events);
+    return NextResponse.json(eventsWithRegistration);
   } catch (error) {
     console.error('[API /api/events] ERROR:', error);
     console.error('[API /api/events] Error name:', error instanceof Error ? error.name : 'unknown');
@@ -92,6 +117,7 @@ export async function POST(request: NextRequest) {
       location,
       type,
       format,
+      genesysPointsLimit,
       entryFee,
       maxPlayers,
       prizeInfo,
@@ -134,6 +160,7 @@ export async function POST(request: NextRequest) {
         location,
         type,
         format,
+        genesysPointsLimit: genesysPointsLimit ? parseInt(genesysPointsLimit) : null,
         entryFee: entryFee ? parseFloat(entryFee) : null,
         maxPlayers: maxPlayers ? parseInt(maxPlayers) : null,
         prizeInfo,

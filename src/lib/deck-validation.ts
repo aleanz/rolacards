@@ -28,8 +28,25 @@ export interface DeckValidationResult {
   warnings: ValidationError[];
 }
 
-// Card types allowed in Extra Deck
-const EXTRA_DECK_TYPES = ['Fusion Monster', 'Synchro Monster', 'XYZ Monster', 'Link Monster'];
+// Card type keywords that identify Extra Deck monsters
+const EXTRA_DECK_KEYWORDS = ['Fusion', 'Synchro', 'XYZ', 'Link'];
+
+/**
+ * Checks if a card is an Extra Deck monster
+ * Handles cases like:
+ * - "Fusion Monster"
+ * - "Pendulum Effect Fusion Monster"
+ * - "XYZ Pendulum Effect Monster"
+ * - "Synchro Monster"
+ * - "Link Monster"
+ */
+function isExtraDeckMonster(cardType: string): boolean {
+  // Check if the card type contains any of the Extra Deck keywords
+  // and also contains "Monster" (to avoid matching Spell/Trap cards)
+  return EXTRA_DECK_KEYWORDS.some(keyword =>
+    cardType.includes(keyword) && cardType.includes('Monster')
+  );
+}
 
 /**
  * Validates that a card can be placed in the specified deck type
@@ -47,10 +64,11 @@ export function validateDeckCard(cardData: any, deckType: 'MAIN' | 'EXTRA' | 'SI
   }
 
   const cardType = cardData.type;
+  const isExtraDeck = isExtraDeckMonster(cardType);
 
   // Extra Deck can only contain specific card types
   if (deckType === 'EXTRA') {
-    if (!EXTRA_DECK_TYPES.includes(cardType)) {
+    if (!isExtraDeck) {
       errors.push({
         field: 'deckType',
         message: `${cardData.name} (${cardType}) cannot be placed in Extra Deck. Only Fusion, Synchro, XYZ, and Link monsters are allowed.`,
@@ -61,7 +79,7 @@ export function validateDeckCard(cardData: any, deckType: 'MAIN' | 'EXTRA' | 'SI
 
   // Main Deck and Side Deck cannot contain Extra Deck monsters
   if (deckType === 'MAIN' || deckType === 'SIDE') {
-    if (EXTRA_DECK_TYPES.includes(cardType)) {
+    if (isExtraDeck) {
       errors.push({
         field: 'deckType',
         message: `${cardData.name} (${cardType}) must be placed in Extra Deck.`,

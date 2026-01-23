@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
-import { Calendar, Clock, MapPin, Users, Trophy, Filter, Search } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Trophy, Filter, Search, CheckCircle, XCircle, Clock as ClockIcon } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -22,6 +22,7 @@ interface Event {
   imageUrl: string | null;
   published: boolean;
   featured: boolean;
+  userRegistrationStatus: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | null;
 }
 
 const eventTypeLabels = {
@@ -288,13 +289,31 @@ export default function EventosPage() {
 
                           {/* Footer */}
                           <div className="flex items-center justify-between pt-3 border-t border-rola-gray/30">
-                            {event.entryFee && (
-                              <span className="text-rola-gold font-semibold">
-                                Entrada: ${event.entryFee}
+                            <div className="flex items-center gap-4">
+                              {event.entryFee && (
+                                <span className="text-rola-gold font-semibold">
+                                  Entrada: ${event.entryFee}
+                                </span>
+                              )}
+                              {event.format && (
+                                <span className="text-gray-500 text-sm">{event.format}</span>
+                              )}
+                            </div>
+                            {event.userRegistrationStatus && (
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                                  event.userRegistrationStatus === 'APROBADO'
+                                    ? 'bg-green-500/10 text-green-500'
+                                    : event.userRegistrationStatus === 'PENDIENTE'
+                                    ? 'bg-yellow-500/10 text-yellow-500'
+                                    : 'bg-red-500/10 text-red-500'
+                                }`}
+                              >
+                                {event.userRegistrationStatus === 'APROBADO' && <CheckCircle className="w-3 h-3" />}
+                                {event.userRegistrationStatus === 'PENDIENTE' && <ClockIcon className="w-3 h-3" />}
+                                {event.userRegistrationStatus === 'RECHAZADO' && <XCircle className="w-3 h-3" />}
+                                {event.userRegistrationStatus}
                               </span>
-                            )}
-                            {event.format && (
-                              <span className="text-gray-500 text-sm">{event.format}</span>
                             )}
                           </div>
                         </div>

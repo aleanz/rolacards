@@ -24,8 +24,7 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: '¿Por qué Rola Cards?', href: '/#porque-rola-cards', icon: Info },
-  { name: 'Eventos', href: '/#eventos', icon: Calendar },
+  { name: 'Eventos', href: '/eventos', icon: Calendar },
   { name: 'Visítanos', href: '/#visitanos', icon: MapPin },
   { name: 'Buscador de Cartas', href: '/buscador-cartas', icon: Search },
   { name: 'Catálogo', href: '/catalogo', icon: ShoppingBag },

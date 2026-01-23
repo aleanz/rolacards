@@ -14,11 +14,15 @@ import {
   Loader2,
   ArrowLeft,
   FileText,
+  Upload,
+  Layers,
+  Edit,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import toast from 'react-hot-toast';
 
 interface Registration {
   id: string;
@@ -48,6 +52,10 @@ export default function MisInscripcionesPage() {
   const router = useRouter();
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+  const [decks, setDecks] = useState<any[]>([]);
+  const [selectedDeck, setSelectedDeck] = useState<string>('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -73,6 +81,78 @@ export default function MisInscripcionesPage() {
       console.error('Error fetching registrations:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDecks = async (format?: string) => {
+    try {
+      const response = await fetch('/api/decks');
+      if (!response.ok) throw new Error('Error al cargar mazos');
+
+      const data = await response.json();
+
+      // Filtrar mazos activos por formato si se especifica
+      const filteredDecks = format
+        ? data.decks.filter((deck: any) => deck.format?.toLowerCase() === format.toLowerCase() && deck.isActive)
+        : data.decks.filter((deck: any) => deck.isActive);
+
+      setDecks(filteredDecks);
+    } catch (error) {
+      console.error('Error fetching decks:', error);
+      toast.error('Error al cargar los mazos');
+    }
+  };
+
+  const handleFileUpload = async (registrationId: string, file: File, transferReference?: string) => {
+    try {
+      setUploadingId(registrationId);
+
+      const formData = new FormData();
+      formData.append('paymentProof', file);
+      if (transferReference) {
+        formData.append('transferReference', transferReference);
+      }
+
+      const response = await fetch(`/api/events/my-registrations/${registrationId}`, {
+        method: 'PATCH',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al subir comprobante');
+      }
+
+      toast.success('Comprobante de pago subido exitosamente');
+      fetchRegistrations();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al subir el comprobante');
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const handleChangeDeck = async (registrationId: string, newDeckId: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('deckId', newDeckId);
+
+      const response = await fetch(`/api/events/my-registrations/${registrationId}`, {
+        method: 'PATCH',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al cambiar mazo');
+      }
+
+      toast.success('Mazo actualizado exitosamente');
+      setEditingDeckId(null);
+      setSelectedDeck('');
+      fetchRegistrations();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al cambiar el mazo');
     }
   };
 
@@ -196,34 +276,61 @@ export default function MisInscripcionesPage() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      {/* Mazo */}
+                      <div className="space-y-2">
                         <p className="text-sm text-gray-500 mb-1">Mazo</p>
-                        <p className="text-white font-medium">{registration.deck.name}</p>
-                        {registration.deck.format && (
-                          <p className="text-xs text-gray-400">
-                            Formato: {registration.deck.format}
+                        <div className="flex items-start gap-2">
+                          <Layers className="w-4 h-4 text-rola-gold mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-white font-medium">{registration.deck.name}</p>
+                            {registration.deck.format && (
+                              <p className="text-xs text-gray-400">
+                                Formato: {registration.deck.format}
+                              </p>
+                            )}
+                            <Link
+                              href={`/mazos/${registration.deck.id}`}
+                              className="text-xs text-rola-gold hover:underline inline-flex items-center gap-1 mt-1"
+                            >
+                              Ver mazo completo
+                            </Link>
+                          </div>
+                        </div>
+                        {!isPast && (
+                          <button
+                            onClick={() => {
+                              setEditingDeckId(registration.id);
+                              setSelectedDeck(registration.deck.id);
+                              fetchDecks(registration.event.format || undefined);
+                            }}
+                            className="text-xs text-gray-400 hover:text-rola-gold inline-flex items-center gap-1"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Cambiar mazo
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Precio */}
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Precio</p>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-rola-gold" />
+                          <p className="text-white font-medium">
+                            {!registration.event.entryFee || Number(registration.event.entryFee) === 0
+                              ? 'GRATIS'
+                              : `$${registration.event.entryFee} MXN`}
+                          </p>
+                        </div>
+                        {registration.transferReference && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            Ref: {registration.transferReference}
                           </p>
                         )}
                       </div>
 
-                      {registration.event.entryFee && (
-                        <div>
-                          <p className="text-sm text-gray-500 mb-1">Entrada</p>
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-rola-gold" />
-                            <p className="text-white font-medium">
-                              ${registration.event.entryFee} MXN
-                            </p>
-                          </div>
-                          {registration.transferReference && (
-                            <p className="text-xs text-gray-400">
-                              Ref: {registration.transferReference}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
+                      {/* Fecha de solicitud */}
                       <div>
                         <p className="text-sm text-gray-500 mb-1">Fecha de Solicitud</p>
                         <p className="text-white font-medium">
@@ -234,17 +341,94 @@ export default function MisInscripcionesPage() {
                       </div>
                     </div>
 
-                    {registration.paymentProof && (
-                      <div className="mb-4">
-                        <a
-                          href={registration.paymentProof}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm text-rola-gold hover:underline"
+                    {/* Comprobante de pago */}
+                    {registration.event.entryFee && Number(registration.event.entryFee) > 0 && (
+                      <div className="mb-4 p-4 bg-rola-gray/30 rounded-lg">
+                        <p className="text-sm text-gray-400 mb-2">Comprobante de Pago</p>
+                        {registration.paymentProof ? (
+                          <a
+                            href={registration.paymentProof}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-rola-gold hover:underline"
+                          >
+                            <FileText className="w-4 h-4" />
+                            Ver comprobante adjunto
+                          </a>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-yellow-400 text-sm mb-2">⚠️ No has subido comprobante de pago</p>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/jpg,image/png,application/pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleFileUpload(registration.id, file);
+                                }
+                              }}
+                              className="hidden"
+                              id={`payment-${registration.id}`}
+                              disabled={uploadingId === registration.id}
+                            />
+                            <label
+                              htmlFor={`payment-${registration.id}`}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-rola-gold text-rola-black rounded-lg hover:bg-rola-gold/90 transition-colors cursor-pointer text-sm font-medium"
+                            >
+                              {uploadingId === registration.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Subiendo...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-4 h-4" />
+                                  Subir comprobante
+                                </>
+                              )}
+                            </label>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Formatos: JPG, PNG, PDF (máx. 5MB)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Cambiar mazo */}
+                    {editingDeckId === registration.id && (
+                      <div className="mb-4 p-4 bg-rola-gray/30 rounded-lg space-y-3">
+                        <p className="text-sm text-white font-medium">Cambiar Mazo</p>
+                        <select
+                          value={selectedDeck}
+                          onChange={(e) => setSelectedDeck(e.target.value)}
+                          className="w-full px-4 py-3 bg-rola-black border border-rola-gray rounded-lg text-white focus:outline-none focus:border-rola-gold transition-colors"
                         >
-                          <FileText className="w-4 h-4" />
-                          Ver comprobante de pago
-                        </a>
+                          <option value="">Selecciona un mazo...</option>
+                          {decks.map((deck) => (
+                            <option key={deck.id} value={deck.id} className="bg-rola-black text-white">
+                              {deck.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleChangeDeck(registration.id, selectedDeck)}
+                            disabled={!selectedDeck || selectedDeck === registration.deck.id}
+                            className="btn btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Confirmar cambio
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingDeckId(null);
+                              setSelectedDeck('');
+                            }}
+                            className="btn btn-ghost btn-sm"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
                       </div>
                     )}
 

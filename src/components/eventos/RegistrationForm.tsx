@@ -57,9 +57,11 @@ export default function RegistrationForm({
       const data = await response.json();
 
       // Filtrar mazos por formato si el evento tiene formato específico
+      // Comparación case-insensitive para mayor flexibilidad
       const filteredDecks = eventFormat
         ? data.decks.filter(
-            (deck: Deck) => deck.format === eventFormat && deck.isActive
+            (deck: Deck) =>
+              deck.format?.toLowerCase() === eventFormat.toLowerCase() && deck.isActive
           )
         : data.decks.filter((deck: Deck) => deck.isActive);
 
@@ -209,14 +211,14 @@ export default function RegistrationForm({
             <select
               value={selectedDeckId}
               onChange={(e) => setSelectedDeckId(e.target.value)}
-              className="input-field"
+              className="w-full px-4 py-3 bg-rola-black border border-rola-gray rounded-lg text-white focus:outline-none focus:border-rola-gold transition-colors"
               disabled={!hasSpace || loading}
               required
             >
-              <option value="">Selecciona un mazo...</option>
+              <option value="" className="bg-rola-black text-gray-400">Selecciona un mazo...</option>
               {decks.map((deck) => (
-                <option key={deck.id} value={deck.id}>
-                  {deck.name} ({deck.cards.length} cartas)
+                <option key={deck.id} value={deck.id} className="bg-rola-black text-white">
+                  {deck.name}
                 </option>
               ))}
             </select>
@@ -249,7 +251,7 @@ export default function RegistrationForm({
                 value={transferReference}
                 onChange={(e) => setTransferReference(e.target.value)}
                 placeholder="Ej: 123456789"
-                className="input-field"
+                className="w-full px-4 py-3 bg-rola-black border border-rola-gray rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-rola-gold transition-colors"
                 disabled={!hasSpace || loading}
               />
             </div>

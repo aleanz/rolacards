@@ -56,12 +56,20 @@ export default function EventsSection() {
 
   const fetchEvents = async () => {
     try {
-      // Obtener solo eventos publicados, destacados y próximos
-      const response = await fetch('/api/events?published=true&featured=true&upcoming=true');
+      // Obtener eventos publicados y próximos
+      const response = await fetch('/api/events?published=true&upcoming=true');
       if (response.ok) {
         const data = await response.json();
+        // Ordenar: destacados primero, luego por fecha
+        const sortedEvents = data.sort((a: Event, b: Event) => {
+          // Si uno es destacado y el otro no, el destacado va primero
+          if (a.featured && !b.featured) return -1;
+          if (!a.featured && b.featured) return 1;
+          // Si ambos tienen el mismo estado de destacado, ordenar por fecha
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
         // Limitar a los primeros 3 eventos
-        setEvents(data.slice(0, 3));
+        setEvents(sortedEvents.slice(0, 3));
       }
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -129,17 +137,18 @@ export default function EventsSection() {
           {events.map((event, index) => {
             const eventDate = new Date(event.date);
             const typeInfo = eventTypeLabels[event.type as keyof typeof eventTypeLabels];
+            const isFeaturedFirst = index === 0 && event.featured;
 
             return (
               <article
                 key={event.id}
                 className={cn(
                   'card card-hover card-shine group relative overflow-hidden',
-                  index === 0 && 'lg:col-span-2 lg:row-span-2'
+                  isFeaturedFirst && 'lg:col-span-2 lg:row-span-2'
                 )}
               >
                 {/* Event image if available */}
-                {event.imageUrl && index === 0 && (
+                {event.imageUrl && isFeaturedFirst && (
                   <div className="absolute inset-0 opacity-10">
                     <img
                       src={event.imageUrl}
@@ -149,18 +158,20 @@ export default function EventsSection() {
                   </div>
                 )}
 
-                {/* Featured event (first one) gets special treatment */}
-                {index === 0 ? (
+                {/* Featured event (first one and marked as featured) gets special treatment */}
+                {isFeaturedFirst ? (
                   <div className="p-8 h-full flex flex-col relative z-10">
                     {/* Badge */}
                     <div className="flex items-center gap-3 mb-6">
                       <span className={cn('badge', typeInfo.color)}>
                         {typeInfo.label}
                       </span>
-                      <span className="badge badge-gold">
-                        <Trophy className="w-3 h-3 mr-1" />
-                        Destacado
-                      </span>
+                      {event.featured && (
+                        <span className="badge badge-gold">
+                          <Trophy className="w-3 h-3 mr-1" />
+                          Destacado
+                        </span>
+                      )}
                     </div>
 
                     {/* Title */}
@@ -208,12 +219,12 @@ export default function EventsSection() {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between pt-6 border-t border-rola-gray/50">
-                      {event.entryFee && (
-                        <div>
-                          <p className="text-gray-500 text-sm">Inscripción</p>
-                          <p className="text-2xl font-bold text-rola-gold">${event.entryFee} MXN</p>
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-gray-500 text-sm">Precio</p>
+                        <p className="text-2xl font-bold text-rola-gold">
+                          {!event.entryFee || Number(event.entryFee) === 0 ? 'GRATIS' : `$${event.entryFee} MXN`}
+                        </p>
+                      </div>
                       <Link
                         href={`/eventos/${event.slug}`}
                         className="btn btn-primary ml-auto"
@@ -252,9 +263,9 @@ export default function EventsSection() {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between">
-                      {event.entryFee && (
-                        <p className="text-rola-gold font-bold">${event.entryFee} MXN</p>
-                      )}
+                      <p className="text-rola-gold font-bold">
+                        {!event.entryFee || Number(event.entryFee) === 0 ? 'GRATIS' : `$${event.entryFee} MXN`}
+                      </p>
                       <Link
                         href={`/eventos/${event.slug}`}
                         className="text-sm text-gray-400 hover:text-rola-gold transition-colors inline-flex items-center gap-1 ml-auto"
