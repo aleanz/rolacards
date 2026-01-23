@@ -1,2 +1,5 @@
+# Ignorar todos los archivos de comprobantes de pago
 *
+# Pero mantener este directorio en git
 !.gitignore
+!.gitkeep
