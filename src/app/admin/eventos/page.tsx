@@ -19,6 +19,7 @@ import {
   Eye,
   EyeOff,
   Star,
+  AlertCircle,
 } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
 
@@ -41,11 +42,25 @@ interface Event {
   featured: boolean;
   createdAt: string;
   updatedAt: string;
-  creator: {
+  User: {
     id: string;
     name: string;
     email: string;
   };
+  EventRegistration?: {
+    id: string;
+    status: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+    User: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    Deck: {
+      id: string;
+      name: string;
+      format: string | null;
+    };
+  }[];
 }
 
 interface EventFormData {
@@ -57,6 +72,7 @@ interface EventFormData {
   location: string;
   type: 'TOURNAMENT' | 'SNEAK_PEEK' | 'LOCALS' | 'SPECIAL_EVENT' | 'ANNOUNCEMENT';
   format: string;
+  genesysPointsLimit: string;
   entryFee: string;
   maxPlayers: string;
   prizeInfo: string;
@@ -97,6 +113,7 @@ export default function EventosPage() {
     location: '',
     type: 'TOURNAMENT',
     format: '',
+    genesysPointsLimit: '100',
     entryFee: '',
     maxPlayers: '',
     prizeInfo: '',
@@ -166,6 +183,7 @@ export default function EventosPage() {
         location: event.location || '',
         type: event.type as EventFormData['type'],
         format: event.format || '',
+        genesysPointsLimit: (event as any).genesysPointsLimit?.toString() || '100',
         entryFee: event.entryFee || '',
         maxPlayers: event.maxPlayers?.toString() || '',
         prizeInfo: event.prizeInfo || '',
@@ -184,6 +202,7 @@ export default function EventosPage() {
         location: '',
         type: 'TOURNAMENT',
         format: '',
+        genesysPointsLimit: '100',
         entryFee: '',
         maxPlayers: '',
         prizeInfo: '',
@@ -419,6 +438,54 @@ export default function EventosPage() {
                   )}
                 </div>
 
+                {/* Registrations Info */}
+                {event.EventRegistration && event.EventRegistration.length > 0 && (
+                  <div className="mb-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users className="w-4 h-4 text-rola-gold" />
+                      <h4 className="text-sm font-semibold text-white">
+                        Inscritos ({event.EventRegistration.filter(r => r.status === 'APROBADO').length}/{event.maxPlayers || '∞'})
+                      </h4>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {event.EventRegistration
+                        .filter(r => r.status === 'APROBADO')
+                        .map((registration) => (
+                          <div
+                            key={registration.id}
+                            className="flex items-start justify-between gap-3 p-3 bg-gray-900/50 rounded-lg"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">
+                                {registration.User.name}
+                              </p>
+                              <p className="text-xs text-gray-400 truncate">
+                                {registration.User.email}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-gray-400">Mazo:</p>
+                              <p className="text-xs font-medium text-rola-gold truncate max-w-[120px]">
+                                {registration.Deck.name}
+                              </p>
+                              {registration.Deck.format && (
+                                <p className="text-xs text-gray-500">
+                                  {registration.Deck.format}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      {event.EventRegistration.filter(r => r.status === 'PENDIENTE').length > 0 && (
+                        <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {event.EventRegistration.filter(r => r.status === 'PENDIENTE').length} pendiente(s) de aprobación
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions */}
                 {isAdmin && (
                   <div className="flex gap-2 pt-4 border-t border-rola-gray/30">
@@ -611,6 +678,23 @@ export default function EventosPage() {
                     ))}
                   </select>
                 </div>
+
+                {formData.format === 'genesys' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Límite de puntos Genesys
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.genesysPointsLimit}
+                      onChange={(e) => setFormData({ ...formData, genesysPointsLimit: e.target.value })}
+                      className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white focus:outline-none focus:border-rola-gold transition-colors"
+                      placeholder="100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Límite estándar: 100 puntos</p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

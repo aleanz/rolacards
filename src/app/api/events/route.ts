@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
 
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
+    const isAdmin = session?.user?.role === 'ADMIN';
 
     const { searchParams } = new URL(request.url);
     const published = searchParams.get('published');
@@ -47,14 +49,40 @@ export async function GET(request: NextRequest) {
     const events = await prisma.event.findMany({
       where,
       include: {
-        creator: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        registrations: userId ? {
+        EventRegistration: isAdmin ? {
+          // Si es admin, traer todas las inscripciones aprobadas con info completa
+          where: {
+            status: {
+              in: ['APROBADO', 'PENDIENTE'],
+            },
+          },
+          select: {
+            id: true,
+            status: true,
+            User: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            Deck: {
+              select: {
+                id: true,
+                name: true,
+                format: true,
+              },
+            },
+          },
+        } : userId ? {
+          // Si es usuario regular, solo traer su inscripción
           where: {
             userId: userId,
           },
@@ -71,15 +99,21 @@ export async function GET(request: NextRequest) {
 
     // Transformar datos para incluir el estado de inscripción
     const eventsWithRegistration = events.map(event => {
-      const userRegistration = userId && event.registrations && event.registrations.length > 0
-        ? event.registrations[0]
-        : null;
+      if (isAdmin) {
+        // Para admins, enviar todas las inscripciones
+        return event;
+      } else {
+        // Para usuarios regulares, solo el estado de su inscripción
+        const userRegistration = userId && event.EventRegistration && event.EventRegistration.length > 0
+          ? event.EventRegistration[0]
+          : null;
 
-      return {
-        ...event,
-        userRegistrationStatus: userRegistration?.status || null,
-        registrations: undefined, // No enviar las inscripciones completas al cliente
-      };
+        return {
+          ...event,
+          userRegistrationStatus: userRegistration?.status || null,
+          EventRegistration: undefined, // No enviar las inscripciones completas al cliente
+        };
+      }
     });
 
     console.log('[API /api/events] Found events:', events.length);
@@ -151,6 +185,7 @@ export async function POST(request: NextRequest) {
     // Crear evento
     const event = await prisma.event.create({
       data: {
+        id: randomUUID(),
         title,
         slug,
         description,
@@ -167,10 +202,11 @@ export async function POST(request: NextRequest) {
         imageUrl,
         published: published || false,
         featured: featured || false,
+        updatedAt: new Date(),
         creatorId: session.user.id,
       },
       include: {
-        creator: {
+        User: {
           select: {
             id: true,
             name: true,

@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { sendRegistrationNotification } from '@/lib/email';
+import { validateDeckAgainstBanlist } from '@/lib/banlist';
 
 export async function PATCH(
   req: NextRequest,
@@ -33,15 +35,21 @@ export async function PATCH(
     const registration = await prisma.eventRegistration.findUnique({
       where: { id: params.id },
       include: {
-        event: {
+        Event: {
           include: {
-            registrations: {
+            EventRegistration: {
               where: {
                 status: 'APROBADO',
               },
             },
           },
         },
+        Deck: {
+          include: {
+            DeckCard: true,
+          },
+        },
+        User: true,
       },
     });
 
@@ -52,14 +60,55 @@ export async function PATCH(
       );
     }
 
-    // Si se está aprobando, verificar que hay cupo disponible
-    if (status === 'APROBADO' && registration.event.maxPlayers) {
-      const approvedCount = registration.event.registrations.length;
-      if (approvedCount >= registration.event.maxPlayers) {
+    // Si se está aprobando, realizar validaciones adicionales
+    if (status === 'APROBADO') {
+      // Verificar que hay cupo disponible
+      if (registration.Event.maxPlayers) {
+        const approvedCount = registration.Event.EventRegistration.length;
+        if (approvedCount >= registration.Event.maxPlayers) {
+          return NextResponse.json(
+            { error: 'No hay cupo disponible en el evento' },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Verificar que hay comprobante de pago (existente o nuevo)
+      const hasPaymentProof = registration.paymentProof || paymentProofFile;
+      if (!hasPaymentProof) {
         return NextResponse.json(
-          { error: 'No hay cupo disponible en el evento' },
+          { error: 'No se puede aprobar una solicitud sin comprobante de pago. Por favor, solicita al usuario que suba su comprobante o súbelo tú mismo.' },
           { status: 400 }
         );
+      }
+
+      // Validar el mazo contra la banlist
+      if (registration.Event.format) {
+        // Transform DeckCard to the format expected by validateDeckAgainstBanlist
+        const deckCards = registration.Deck.DeckCard.map(card => ({
+          cardData: card.cardData,
+          quantity: card.quantity,
+          placement: card.deckType.toLowerCase(), // MAIN, EXTRA, SIDE -> main, extra, side
+        }));
+
+        const banlistErrors = validateDeckAgainstBanlist(
+          deckCards,
+          registration.Event.format as any
+        );
+
+        if (banlistErrors.length > 0) {
+          const errorMessages = banlistErrors.map(err =>
+            `${err.cardName}: ${err.reason}`
+          ).join('; ');
+
+          return NextResponse.json(
+            {
+              error: 'No se puede aprobar: El mazo no cumple con las reglas de banlist del formato',
+              details: errorMessages,
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -68,6 +117,23 @@ export async function PATCH(
     let paymentProofType: string | undefined = undefined;
 
     if (paymentProofFile) {
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!allowedTypes.includes(paymentProofFile.type)) {
+        return NextResponse.json(
+          { error: 'Tipo de archivo no permitido. Solo se permiten imágenes (JPG, PNG, WEBP) y PDF.' },
+          { status: 400 }
+        );
+      }
+
+      // Validar tamaño (máximo 5MB)
+      if (paymentProofFile.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: 'El archivo es demasiado grande. Máximo 5MB.' },
+          { status: 400 }
+        );
+      }
+
       const bytes = await paymentProofFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
@@ -116,21 +182,21 @@ export async function PATCH(
       where: { id: params.id },
       data: updateData,
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        event: {
+        Event: {
           select: {
             id: true,
             title: true,
             date: true,
           },
         },
-        deck: {
+        Deck: {
           select: {
             id: true,
             name: true,
@@ -138,6 +204,17 @@ export async function PATCH(
         },
       },
     });
+
+    // Enviar correo de notificación al usuario (solo para APROBADO o RECHAZADO)
+    if (status === 'APROBADO' || status === 'RECHAZADO') {
+      await sendRegistrationNotification(
+        updatedRegistration.User.email!,
+        updatedRegistration.User.name || 'Usuario',
+        updatedRegistration.Event.title,
+        status as 'APROBADO' | 'RECHAZADO',
+        rejectionNote || undefined
+      );
+    }
 
     return NextResponse.json({
       message: 'Solicitud actualizada exitosamente',

@@ -86,7 +86,7 @@ export async function validateRegistration(
   const deck = await prisma.deck.findUnique({
     where: { id: deckId },
     include: {
-      cards: true,
+      DeckCard: true,
     },
   });
 
@@ -118,7 +118,7 @@ export async function validateRegistration(
     name: deck.name,
     description: deck.description || undefined,
     format: deck.format || undefined,
-    cards: deck.cards.map(card => ({
+    cards: deck.DeckCard.map(card => ({
       id: card.id,
       cardId: card.cardId,
       quantity: card.quantity,
@@ -175,7 +175,7 @@ export async function canCancelRegistration(registrationId: string, userId: stri
   const registration = await prisma.eventRegistration.findUnique({
     where: { id: registrationId },
     include: {
-      event: true,
+      Event: true,
     },
   });
 
@@ -195,7 +195,7 @@ export async function canCancelRegistration(registrationId: string, userId: stri
 
   // Can only cancel if event hasn't started yet
   const now = new Date();
-  if (registration.event.date < now) {
+  if (registration.Event.date < now) {
     return false;
   }
 
@@ -209,7 +209,7 @@ export async function canDeleteDeck(deckId: string, userId: string): Promise<{ c
   const deck = await prisma.deck.findUnique({
     where: { id: deckId },
     include: {
-      registrations: {
+      EventRegistration: {
         where: {
           status: {
             in: ['PENDIENTE', 'APROBADO'],
@@ -228,10 +228,10 @@ export async function canDeleteDeck(deckId: string, userId: string): Promise<{ c
   }
 
   // Cannot delete if used in active registrations
-  if (deck.registrations.length > 0) {
+  if (deck.EventRegistration.length > 0) {
     return {
       canDelete: false,
-      reason: `Este mazo está siendo usado en ${deck.registrations.length} inscripción(es) activa(s)`,
+      reason: `Este mazo está siendo usado en ${deck.EventRegistration.length} inscripción(es) activa(s)`,
     };
   }
 

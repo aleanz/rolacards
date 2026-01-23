@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -63,11 +64,14 @@ export async function POST(request: NextRequest) {
       update: {
         value: String(value),
         type: type || 'STRING',
+        updatedAt: new Date(),
       },
       create: {
+        id: randomUUID(),
         key,
         value: String(value),
         type: type || 'STRING',
+        updatedAt: new Date(),
       },
     });
 
@@ -105,11 +109,14 @@ export async function PUT(request: NextRequest) {
           update: {
             value: String(setting.value),
             type: (setting.type || 'STRING') as any,
+            updatedAt: new Date(),
           },
           create: {
+            id: randomUUID(),
             key: setting.key,
             value: String(setting.value),
             type: (setting.type || 'STRING') as any,
+            updatedAt: new Date(),
           },
         })
       )

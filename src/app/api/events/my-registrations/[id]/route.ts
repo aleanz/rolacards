@@ -27,9 +27,9 @@ export async function PATCH(
     const registration = await prisma.eventRegistration.findUnique({
       where: { id: params.id },
       include: {
-        user: true,
-        event: true,
-        deck: true,
+        User: true,
+        Event: true,
+        Deck: true,
       },
     });
 
@@ -51,6 +51,23 @@ export async function PATCH(
     let paymentProofUrl: string | undefined = undefined;
 
     if (paymentProofFile) {
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!allowedTypes.includes(paymentProofFile.type)) {
+        return NextResponse.json(
+          { error: 'Tipo de archivo no permitido. Solo se permiten imágenes (JPG, PNG, WEBP) y PDF.' },
+          { status: 400 }
+        );
+      }
+
+      // Validar tamaño (máximo 5MB)
+      if (paymentProofFile.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: 'El archivo es demasiado grande. Máximo 5MB.' },
+          { status: 400 }
+        );
+      }
+
       const bytes = await paymentProofFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
@@ -79,9 +96,9 @@ export async function PATCH(
       }
 
       // Verificar formato del mazo
-      if (registration.event.format && deck.format?.toLowerCase() !== registration.event.format.toLowerCase()) {
+      if (registration.Event.format && deck.format?.toLowerCase() !== registration.Event.format.toLowerCase()) {
         return NextResponse.json(
-          { error: `El mazo debe ser del formato ${registration.event.format}` },
+          { error: `El mazo debe ser del formato ${registration.Event.format}` },
           { status: 400 }
         );
       }
@@ -106,8 +123,8 @@ export async function PATCH(
       where: { id: params.id },
       data: updateData,
       include: {
-        event: true,
-        deck: true,
+        Event: true,
+        Deck: true,
       },
     });
 

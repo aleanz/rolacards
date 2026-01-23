@@ -31,7 +31,7 @@ interface Registration {
   rejectionNote: string | null;
   transferReference: string | null;
   paymentProof: string | null;
-  event: {
+  Event: {
     id: string;
     title: string;
     slug: string;
@@ -40,7 +40,7 @@ interface Registration {
     entryFee: string | null;
     location: string | null;
   };
-  deck: {
+  Deck: {
     id: string;
     name: string;
     format: string | null;
@@ -219,7 +219,7 @@ export default function MisInscripcionesPage() {
           ) : (
             <div className="space-y-6">
               {registrations.map((registration) => {
-                const eventDate = new Date(registration.event.date);
+                const eventDate = new Date(registration.Event.date);
                 const isPast = eventDate < new Date();
 
                 return (
@@ -227,20 +227,20 @@ export default function MisInscripcionesPage() {
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
                         <Link
-                          href={`/eventos/${registration.event.slug}`}
+                          href={`/eventos/${registration.Event.slug}`}
                           className="font-display text-2xl font-bold text-white hover:text-rola-gold transition-colors"
                         >
-                          {registration.event.title}
+                          {registration.Event.title}
                         </Link>
                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             {format(eventDate, "d 'de' MMMM, yyyy", { locale: es })}
                           </div>
-                          {registration.event.location && (
+                          {registration.Event.location && (
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />
-                              {registration.event.location}
+                              {registration.Event.location}
                             </div>
                           )}
                         </div>
@@ -283,14 +283,14 @@ export default function MisInscripcionesPage() {
                         <div className="flex items-start gap-2">
                           <Layers className="w-4 h-4 text-rola-gold mt-0.5 flex-shrink-0" />
                           <div className="flex-1">
-                            <p className="text-white font-medium">{registration.deck.name}</p>
-                            {registration.deck.format && (
+                            <p className="text-white font-medium">{registration.Deck.name}</p>
+                            {registration.Deck.format && (
                               <p className="text-xs text-gray-400">
-                                Formato: {registration.deck.format}
+                                Formato: {registration.Deck.format}
                               </p>
                             )}
                             <Link
-                              href={`/mazos/${registration.deck.id}`}
+                              href={`/mazos/${registration.Deck.id}`}
                               className="text-xs text-rola-gold hover:underline inline-flex items-center gap-1 mt-1"
                             >
                               Ver mazo completo
@@ -301,8 +301,8 @@ export default function MisInscripcionesPage() {
                           <button
                             onClick={() => {
                               setEditingDeckId(registration.id);
-                              setSelectedDeck(registration.deck.id);
-                              fetchDecks(registration.event.format || undefined);
+                              setSelectedDeck(registration.Deck.id);
+                              fetchDecks(registration.Event.format || undefined);
                             }}
                             className="text-xs text-gray-400 hover:text-rola-gold inline-flex items-center gap-1"
                           >
@@ -318,9 +318,9 @@ export default function MisInscripcionesPage() {
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4 text-rola-gold" />
                           <p className="text-white font-medium">
-                            {!registration.event.entryFee || Number(registration.event.entryFee) === 0
+                            {!registration.Event.entryFee || Number(registration.Event.entryFee) === 0
                               ? 'GRATIS'
-                              : `$${registration.event.entryFee} MXN`}
+                              : `$${registration.Event.entryFee} MXN`}
                           </p>
                         </div>
                         {registration.transferReference && (
@@ -342,7 +342,7 @@ export default function MisInscripcionesPage() {
                     </div>
 
                     {/* Comprobante de pago */}
-                    {registration.event.entryFee && Number(registration.event.entryFee) > 0 && (
+                    {registration.Event.entryFee && Number(registration.Event.entryFee) > 0 && (
                       <div className="mb-4 p-4 bg-rola-gray/30 rounded-lg">
                         <p className="text-sm text-gray-400 mb-2">Comprobante de Pago</p>
                         {registration.paymentProof ? (
@@ -360,7 +360,7 @@ export default function MisInscripcionesPage() {
                             <p className="text-yellow-400 text-sm mb-2">⚠️ No has subido comprobante de pago</p>
                             <input
                               type="file"
-                              accept="image/jpeg,image/jpg,image/png,application/pdf"
+                              accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
@@ -388,7 +388,7 @@ export default function MisInscripcionesPage() {
                               )}
                             </label>
                             <p className="text-xs text-gray-500 mt-1">
-                              Formatos: JPG, PNG, PDF (máx. 5MB)
+                              Formatos: JPG, PNG, WEBP, PDF (máx. 5MB)
                             </p>
                           </div>
                         )}
@@ -414,7 +414,7 @@ export default function MisInscripcionesPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleChangeDeck(registration.id, selectedDeck)}
-                            disabled={!selectedDeck || selectedDeck === registration.deck.id}
+                            disabled={!selectedDeck || selectedDeck === registration.Deck.id}
                             className="btn btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Confirmar cambio

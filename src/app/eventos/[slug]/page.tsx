@@ -30,18 +30,18 @@ async function getEvent(slug: string, userId?: string) {
   const event = await prisma.event.findUnique({
     where: { slug },
     include: {
-      creator: {
+      User: {
         select: {
           name: true,
           email: true,
         },
       },
-      registrations: {
+      EventRegistration: {
         where: {
           status: { in: ['PENDIENTE', 'APROBADO'] },
         },
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               name: true,
@@ -69,12 +69,12 @@ export default async function EventDetailPage({ params }: EventPageProps) {
 
   // Verificar si el usuario ya está registrado
   const userRegistration = session?.user?.id
-    ? event.registrations.find((reg) => reg.user.id === session.user.id)
+    ? event.EventRegistration.find((reg) => reg.User.id === session.user.id)
     : null;
 
   // Contar registros por status
-  const approvedRegistrations = event.registrations.filter(reg => reg.status === 'APROBADO');
-  const currentRegistrations = event.registrations.length;
+  const approvedRegistrations = event.EventRegistration.filter(reg => reg.status === 'APROBADO');
+  const currentRegistrations = event.EventRegistration.length;
 
   return (
     <>

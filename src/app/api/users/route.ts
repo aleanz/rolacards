@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { hash } from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 // GET /api/users - Listar usuarios
 export async function GET(request: NextRequest) {
@@ -72,11 +73,13 @@ export async function POST(request: NextRequest) {
     // Crear usuario
     const user = await prisma.user.create({
       data: {
+        id: randomUUID(),
         email,
         password: hashedPassword,
         name,
         role: role || 'STAFF',
         avatar: avatar || null,
+        updatedAt: new Date(),
       },
       select: {
         id: true,

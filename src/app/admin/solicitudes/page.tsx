@@ -27,19 +27,21 @@ interface Registration {
   paymentProof: string | null;
   paymentProofType: string | null;
   rejectionNote: string | null;
-  user: {
+  User: {
     id: string;
     name: string;
     email: string;
   };
-  event: {
+  Event: {
     id: string;
     title: string;
     date: string;
     format: string | null;
     entryFee: string | null;
+    maxPlayers: number | null;
+    approvedCount: number;
   };
-  deck: {
+  Deck: {
     id: string;
     name: string;
     format: string | null;
@@ -281,10 +283,10 @@ export default function SolicitudesPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-display text-lg font-bold text-white">
-                        {registration.event.title}
+                        {registration.Event.title}
                       </h3>
                       <p className="text-sm text-gray-400">
-                        {format(new Date(registration.event.date), "d 'de' MMMM, yyyy", {
+                        {format(new Date(registration.Event.date), "d 'de' MMMM, yyyy", {
                           locale: es,
                         })}
                       </p>
@@ -303,26 +305,26 @@ export default function SolicitudesPage() {
                   </div>
 
                   {/* User Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Jugador</p>
-                      <p className="text-white font-medium">{registration.user.name}</p>
-                      <p className="text-gray-400 text-xs">{registration.user.email}</p>
+                      <p className="text-white font-medium">{registration.User.name}</p>
+                      <p className="text-gray-400 text-xs">{registration.User.email}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Mazo</p>
-                      <p className="text-white font-medium">{registration.deck.name}</p>
-                      {registration.deck.format && (
+                      <p className="text-white font-medium">{registration.Deck.name}</p>
+                      {registration.Deck.format && (
                         <p className="text-gray-400 text-xs">
-                          Formato: {registration.deck.format}
+                          Formato: {registration.Deck.format}
                         </p>
                       )}
                     </div>
                     <div>
                       <p className="text-gray-500">Entrada</p>
                       <p className="text-white font-medium">
-                        {registration.event.entryFee
-                          ? `$${registration.event.entryFee} MXN`
+                        {registration.Event.entryFee
+                          ? `$${registration.Event.entryFee} MXN`
                           : 'Gratis'}
                       </p>
                       {registration.transferReference && (
@@ -331,6 +333,26 @@ export default function SolicitudesPage() {
                         </p>
                       )}
                     </div>
+                    {registration.Event.maxPlayers && (
+                      <div>
+                        <p className="text-gray-500">Cupos</p>
+                        <p className="text-white font-medium">
+                          {registration.Event.approvedCount} / {registration.Event.maxPlayers}
+                        </p>
+                        <p className={`text-xs ${
+                          registration.Event.approvedCount >= registration.Event.maxPlayers
+                            ? 'text-red-400'
+                            : registration.Event.approvedCount >= registration.Event.maxPlayers * 0.8
+                            ? 'text-yellow-400'
+                            : 'text-green-400'
+                        }`}>
+                          {registration.Event.approvedCount >= registration.Event.maxPlayers
+                            ? 'Lleno'
+                            : `${registration.Event.maxPlayers - registration.Event.approvedCount} disponibles`
+                          }
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Payment Proof */}
@@ -383,18 +405,18 @@ export default function SolicitudesPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <p className="text-sm text-gray-500">Evento</p>
-                <p className="text-white font-medium">{selectedRegistration.event.title}</p>
+                <p className="text-white font-medium">{selectedRegistration.Event.title}</p>
               </div>
 
               <div>
                 <p className="text-sm text-gray-500">Jugador</p>
-                <p className="text-white font-medium">{selectedRegistration.user.name}</p>
-                <p className="text-gray-400 text-sm">{selectedRegistration.user.email}</p>
+                <p className="text-white font-medium">{selectedRegistration.User.name}</p>
+                <p className="text-gray-400 text-sm">{selectedRegistration.User.email}</p>
               </div>
 
               <div>
                 <p className="text-sm text-gray-500">Mazo</p>
-                <p className="text-white font-medium">{selectedRegistration.deck.name}</p>
+                <p className="text-white font-medium">{selectedRegistration.Deck.name}</p>
               </div>
 
               {selectedRegistration.paymentProof && (
@@ -422,27 +444,59 @@ export default function SolicitudesPage() {
 
               {!selectedRegistration.paymentProof && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-2">Subir Comprobante (Opcional)</p>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
-                    onChange={(e) => setPaymentProofFile(e.target.files?.[0] || null)}
-                    className="input-field"
-                  />
+                  <label className="block text-sm font-medium text-gray-400 mb-3">
+                    Subir Comprobante (Opcional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                      onChange={(e) => setPaymentProofFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                      id="payment-proof-upload"
+                    />
+                    <label
+                      htmlFor="payment-proof-upload"
+                      className="flex items-center justify-center gap-3 px-4 py-3 bg-gray-800 hover:bg-gray-700 border-2 border-dashed border-gray-600 hover:border-primary-500 rounded-lg cursor-pointer transition-all duration-200 group"
+                    >
+                      <Upload className="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                      <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                        {paymentProofFile ? paymentProofFile.name : 'Seleccionar archivo (JPG, PNG, WEBP, PDF)'}
+                      </span>
+                    </label>
+                    {paymentProofFile && (
+                      <p className="mt-2 text-xs text-green-500 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Archivo seleccionado: {paymentProofFile.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 
               {selectedRegistration.status === 'PENDIENTE' && (
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">
+                  <label className="block text-sm font-medium text-gray-400 mb-3">
                     Nota de Rechazo (si aplica)
                   </label>
-                  <textarea
-                    value={rejectionNote}
-                    onChange={(e) => setRejectionNote(e.target.value)}
-                    placeholder="Opcional: Razón del rechazo..."
-                    className="input-field min-h-[100px]"
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={rejectionNote}
+                      onChange={(e) => setRejectionNote(e.target.value)}
+                      placeholder="Escribe aquí la razón del rechazo (opcional)..."
+                      className="w-full px-4 py-3 bg-gray-800 border-2 border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 resize-none min-h-[120px]"
+                      rows={4}
+                    />
+                    <div className="absolute bottom-3 right-3 text-xs text-gray-500">
+                      {rejectionNote.length} caracteres
+                    </div>
+                  </div>
+                  {rejectionNote.length > 0 && (
+                    <p className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Esta nota se enviará al usuario si se rechaza la solicitud
+                    </p>
+                  )}
                 </div>
               )}
             </div>
