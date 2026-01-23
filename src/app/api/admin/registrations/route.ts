@@ -22,23 +22,24 @@ export async function GET(req: NextRequest) {
     const registrations = await prisma.eventRegistration.findMany({
       where,
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        event: {
+        Event: {
           select: {
             id: true,
             title: true,
             date: true,
             format: true,
             entryFee: true,
+            maxPlayers: true,
           },
         },
-        deck: {
+        Deck: {
           select: {
             id: true,
             name: true,
@@ -51,7 +52,27 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ registrations });
+    // Para cada registro, obtener el count de aprobados del evento
+    const registrationsWithCounts = await Promise.all(
+      registrations.map(async (reg) => {
+        const approvedCount = await prisma.eventRegistration.count({
+          where: {
+            eventId: reg.Event.id,
+            status: 'APROBADO',
+          },
+        });
+
+        return {
+          ...reg,
+          Event: {
+            ...reg.Event,
+            approvedCount,
+          },
+        };
+      })
+    );
+
+    return NextResponse.json({ registrations: registrationsWithCounts });
   } catch (error) {
     console.error('Error fetching registrations:', error);
     return NextResponse.json(
