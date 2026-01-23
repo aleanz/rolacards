@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { hash } from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -12,23 +13,33 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@rolacards.com' },
-    update: {},
+    update: {
+      updatedAt: new Date(),
+    },
     create: {
+      id: randomUUID(),
       email: 'admin@rolacards.com',
       password: adminPassword,
       name: 'Administrador',
       role: 'ADMIN',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
   const staff = await prisma.user.upsert({
     where: { email: 'staff@rolacards.com' },
-    update: {},
+    update: {
+      updatedAt: new Date(),
+    },
     create: {
+      id: randomUUID(),
       email: 'staff@rolacards.com',
       password: staffPassword,
       name: 'Staff Member',
       role: 'STAFF',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
@@ -42,6 +53,7 @@ async function main() {
       where: { slug: 'yu-gi-oh' },
       update: {},
       create: {
+        id: randomUUID(),
         name: 'Yu-Gi-Oh!',
         slug: 'yu-gi-oh',
         description: 'Cartas del juego Yu-Gi-Oh! TCG',
@@ -52,6 +64,7 @@ async function main() {
       where: { slug: 'pokemon' },
       update: {},
       create: {
+        id: randomUUID(),
         name: 'Pokémon',
         slug: 'pokemon',
         description: 'Cartas del juego Pokémon TCG',
@@ -62,6 +75,7 @@ async function main() {
       where: { slug: 'magic' },
       update: {},
       create: {
+        id: randomUUID(),
         name: 'Magic: The Gathering',
         slug: 'magic',
         description: 'Cartas del juego Magic: The Gathering',
@@ -72,6 +86,7 @@ async function main() {
       where: { slug: 'accesorios' },
       update: {},
       create: {
+        id: randomUUID(),
         name: 'Accesorios',
         slug: 'accesorios',
         description: 'Sleeves, playmats, deckboxes y más',
@@ -101,6 +116,7 @@ async function main() {
       where: { slug: 'torneo-semanal-yu-gi-oh' },
       update: {},
       create: {
+        id: randomUUID(),
         title: 'Torneo Semanal Yu-Gi-Oh!',
         slug: 'torneo-semanal-yu-gi-oh',
         description: 'Torneo competitivo semanal con premios en producto',
@@ -114,6 +130,7 @@ async function main() {
         prizeInfo: '1er lugar: 12 sobres, 2do lugar: 8 sobres, 3er-4to lugar: 4 sobres',
         published: true,
         featured: true,
+        updatedAt: new Date(),
         creatorId: admin.id,
       },
     }),
@@ -121,6 +138,7 @@ async function main() {
       where: { slug: 'sneak-peek-nuevo-set' },
       update: {},
       create: {
+        id: randomUUID(),
         title: 'Sneak Peek: Nuevo Set',
         slug: 'sneak-peek-nuevo-set',
         description: 'Sé el primero en jugar con las nuevas cartas',
@@ -134,6 +152,7 @@ async function main() {
         prizeInfo: 'Promos exclusivas + Premios por participación',
         published: true,
         featured: true,
+        updatedAt: new Date(),
         creatorId: admin.id,
       },
     }),
@@ -141,6 +160,7 @@ async function main() {
       where: { slug: 'locals-championship' },
       update: {},
       create: {
+        id: randomUUID(),
         title: 'Locals Championship',
         slug: 'locals-championship',
         description: 'Campeonato mensual con invitación a regional',
@@ -154,6 +174,7 @@ async function main() {
         prizeInfo: '1er lugar: Invitación Regional + 24 sobres, 2do lugar: 18 sobres, 3er-4to lugar: 12 sobres, 5to-8vo lugar: 6 sobres',
         published: true,
         featured: true,
+        updatedAt: new Date(),
         creatorId: admin.id,
       },
     }),
@@ -179,7 +200,11 @@ async function main() {
       prisma.storeSetting.upsert({
         where: { key: setting.key },
         update: {},
-        create: setting,
+        create: {
+          id: randomUUID(),
+          ...setting,
+          updatedAt: new Date(),
+        },
       })
     )
   );
