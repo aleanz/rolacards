@@ -38,6 +38,7 @@ export interface YGOCard {
   card_prices: CardPrice[];
   banlist_info?: BanlistInfo;
   misc_info?: MiscInfo[];
+  genesys_points?: number;
 }
 
 export interface CardSet {
@@ -80,6 +81,7 @@ export interface YGOSearchParams {
   archetype?: string;
   cardset?: string;
   banlist?: 'tcg' | 'ocg' | 'goat';
+  format?: 'tcg' | 'ocg' | 'goat' | 'genesys'; // Format for specific data (e.g., genesys_points)
   sort?: 'name' | 'atk' | 'def' | 'level' | 'id' | 'new';
   num?: number; // Results per page
   offset?: number;

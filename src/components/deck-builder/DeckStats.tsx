@@ -1,14 +1,56 @@
 'use client';
 
+import { useState } from 'react';
 import { countCardsByType } from '@/lib/deck-validation';
+import { calculateGenesysPoints } from '@/lib/banlist';
 import type { DeckCard } from '@/lib/deck-validation';
+import { RefreshCw } from 'lucide-react';
 
 interface DeckStatsProps {
   cards: DeckCard[];
+  format?: string;
+  onRefreshGenesysData?: (updatedCards: DeckCard[]) => void;
 }
 
-export default function DeckStats({ cards }: DeckStatsProps) {
+export default function DeckStats({ cards, format, onRefreshGenesysData }: DeckStatsProps) {
   const counts = countCardsByType(cards);
+  const genesysPoints = format === 'Genesys' ? calculateGenesysPoints(cards) : 0;
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshGenesysData = async () => {
+    if (!onRefreshGenesysData || cards.length === 0) return;
+
+    setIsRefreshing(true);
+    try {
+      const updatedCards: DeckCard[] = [];
+
+      for (const card of cards) {
+        try {
+          const response = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${card.cardId}&format=genesys&misc=yes`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.data && data.data[0]) {
+              updatedCards.push({
+                ...card,
+                cardData: data.data[0],
+              });
+            } else {
+              updatedCards.push(card);
+            }
+          } else {
+            updatedCards.push(card);
+          }
+        } catch (error) {
+          console.error('Error refreshing card:', card.cardId, error);
+          updatedCards.push(card);
+        }
+      }
+
+      onRefreshGenesysData(updatedCards);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Calculate card type distribution
   const typeDistribution: Record<string, number> = {};
@@ -40,6 +82,39 @@ export default function DeckStats({ cards }: DeckStatsProps) {
       <h3 className="font-display text-lg font-bold text-white mb-4">
         Estadísticas del Mazo
       </h3>
+
+      {/* Genesys Points (if format is Genesys) */}
+      {format === 'Genesys' && (
+        <div className="mb-6 bg-gradient-to-r from-rola-purple/20 to-rola-gold/20 rounded-lg p-4 border border-rola-gold/30">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm font-medium text-gray-400 mb-1">Puntos Genesys</p>
+              <p className="text-xs text-gray-500">Límite estándar: 100</p>
+            </div>
+            <div className="text-right">
+              <p className={`text-3xl font-bold ${genesysPoints > 100 ? 'text-red-400' : 'text-rola-gold'}`}>
+                {genesysPoints}
+              </p>
+              <p className="text-xs text-gray-400">/ 100</p>
+            </div>
+          </div>
+          {genesysPoints === 0 && cards.length > 0 && (
+            <button
+              onClick={handleRefreshGenesysData}
+              disabled={isRefreshing}
+              className="w-full mt-2 px-3 py-2 bg-rola-gold/10 hover:bg-rola-gold/20 border border-rola-gold/30 rounded-lg text-xs text-rola-gold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Actualizando puntos...' : 'Actualizar puntos Genesys'}
+            </button>
+          )}
+          {genesysPoints > 100 && (
+            <p className="text-xs text-red-400 mt-2">
+              ⚠️ El mazo excede el límite de puntos estándar
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Card counts */}
       <div className="grid grid-cols-3 gap-4 mb-6">

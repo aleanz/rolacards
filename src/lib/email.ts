@@ -151,6 +151,263 @@ export async function sendVerificationEmail(email: string, token: string, name: 
   }
 }
 
+// Función para enviar confirmación de solicitud creada (al usuario)
+export async function sendRegistrationCreatedEmail(
+  email: string,
+  userName: string,
+  eventTitle: string,
+  eventDate: Date,
+  deckName: string,
+  hasPaymentProof: boolean
+) {
+  const mg = getMailgunClient();
+
+  if (!mg) {
+    console.error('❌ Mailgun no está configurado. No se puede enviar email.');
+    return { success: false, error: 'Mailgun not configured' };
+  }
+
+  const domain = process.env.MAILGUN_DOMAIN || '';
+  const formattedDate = eventDate.toLocaleDateString('es-MX', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  try {
+    const result = await mg.messages.create(domain, {
+      from: process.env.EMAIL_FROM || 'Rola Cards <noreply@sandbox.mailgun.org>',
+      to: [email],
+      subject: `Solicitud de inscripción recibida - ${eventTitle}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              .header {
+                background: linear-gradient(135deg, #D4AF37 0%, #C5A028 100%);
+                padding: 30px;
+                text-align: center;
+              }
+              .header h1 {
+                color: #ffffff;
+                margin: 0;
+                font-size: 28px;
+              }
+              .content {
+                padding: 40px 30px;
+              }
+              .info-box {
+                background: #f8f9fa;
+                border-left: 4px solid #D4AF37;
+                padding: 15px;
+                margin: 20px 0;
+              }
+              .warning-box {
+                background: #fef3c7;
+                border-left: 4px solid #f59e0b;
+                padding: 15px;
+                margin: 20px 0;
+              }
+              .footer {
+                background: #f8f8f8;
+                padding: 20px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>ROLA CARDS</h1>
+              </div>
+              <div class="content">
+                <h2>¡Solicitud recibida, ${userName}!</h2>
+                <p>Hemos recibido tu solicitud de inscripción para el siguiente evento:</p>
+
+                <div class="info-box">
+                  <p><strong>📅 Evento:</strong> ${eventTitle}</p>
+                  <p><strong>🗓️ Fecha:</strong> ${formattedDate}</p>
+                  <p><strong>🎴 Mazo:</strong> ${deckName}</p>
+                  <p><strong>📄 Comprobante de pago:</strong> ${hasPaymentProof ? '✅ Adjunto' : '⚠️ Pendiente'}</p>
+                </div>
+
+                ${!hasPaymentProof ? `
+                  <div class="warning-box">
+                    <p><strong>⚠️ Acción requerida</strong></p>
+                    <p>No hemos recibido tu comprobante de pago. Tu solicitud está marcada como <strong>PENDIENTE DE PAGO</strong>.</p>
+                    <p>Para confirmar tu inscripción, nuestro equipo necesita verificar tu pago. Puedes subir el comprobante desde tu panel de usuario o contactarnos directamente.</p>
+                  </div>
+                ` : `
+                  <p>Tu solicitud está siendo revisada por nuestro equipo. Te notificaremos cuando sea aprobada.</p>
+                `}
+
+                <p style="margin-top: 30px;">Si tienes alguna duda, no dudes en contactarnos.</p>
+              </div>
+              <div class="footer">
+                <p>Este correo fue enviado por Rola Cards</p>
+                <p>© ${new Date().getFullYear()} Rola Cards. Todos los derechos reservados.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    console.log('✅ Email de confirmación de solicitud enviado a:', email);
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('❌ Error al enviar email de confirmación:', error);
+    return { success: false, error };
+  }
+}
+
+// Función para notificar a admins sobre nueva solicitud
+export async function sendAdminNotificationEmail(
+  adminEmails: string[],
+  userName: string,
+  userEmail: string,
+  eventTitle: string,
+  deckName: string,
+  registrationId: string,
+  hasPaymentProof: boolean
+) {
+  const mg = getMailgunClient();
+
+  if (!mg) {
+    console.error('❌ Mailgun no está configurado. No se puede enviar email.');
+    return { success: false, error: 'Mailgun not configured' };
+  }
+
+  const domain = process.env.MAILGUN_DOMAIN || '';
+  const reviewUrl = `${process.env.NEXTAUTH_URL}/admin/solicitudes`;
+
+  try {
+    const result = await mg.messages.create(domain, {
+      from: process.env.EMAIL_FROM || 'Rola Cards <noreply@sandbox.mailgun.org>',
+      to: adminEmails,
+      subject: `Nueva solicitud de inscripción - ${eventTitle}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              .header {
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                padding: 30px;
+                text-align: center;
+                color: white;
+              }
+              .content {
+                padding: 40px 30px;
+              }
+              .info-box {
+                background: #f8f9fa;
+                border-left: 4px solid #3b82f6;
+                padding: 15px;
+                margin: 20px 0;
+              }
+              .button {
+                display: inline-block;
+                padding: 14px 30px;
+                background: #3b82f6;
+                color: #ffffff !important;
+                text-decoration: none;
+                border-radius: 5px;
+                font-weight: bold;
+                margin: 20px 0;
+              }
+              .footer {
+                background: #f8f8f8;
+                padding: 20px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🔔 Nueva Solicitud de Inscripción</h1>
+              </div>
+              <div class="content">
+                <p>Se ha recibido una nueva solicitud de inscripción que requiere tu revisión:</p>
+
+                <div class="info-box">
+                  <p><strong>👤 Usuario:</strong> ${userName} (${userEmail})</p>
+                  <p><strong>📅 Evento:</strong> ${eventTitle}</p>
+                  <p><strong>🎴 Mazo:</strong> ${deckName}</p>
+                  <p><strong>📄 Comprobante:</strong> ${hasPaymentProof ? '✅ Adjunto' : '⚠️ No adjunto'}</p>
+                </div>
+
+                ${!hasPaymentProof ? `
+                  <p style="color: #f59e0b;"><strong>⚠️ Esta solicitud no incluye comprobante de pago.</strong></p>
+                ` : ''}
+
+                <div style="text-align: center;">
+                  <a href="${reviewUrl}" class="button">Revisar Solicitud</a>
+                </div>
+
+                <p style="font-size: 13px; color: #666; margin-top: 20px;">
+                  Recuerda que solo puedes aprobar solicitudes que tengan comprobante de pago y mazo válido.
+                </p>
+              </div>
+              <div class="footer">
+                <p>Sistema de notificaciones de Rola Cards</p>
+                <p>© ${new Date().getFullYear()} Rola Cards.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    console.log('✅ Notificación enviada a admins');
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('❌ Error al enviar notificación a admins:', error);
+    return { success: false, error };
+  }
+}
+
 // Función adicional para enviar notificaciones de inscripciones
 export async function sendRegistrationNotification(
   email: string,

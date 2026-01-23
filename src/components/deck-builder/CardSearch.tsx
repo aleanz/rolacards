@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Search, Loader2, X, Filter, CheckCircle2, Ban, AlertCircle } from 'lucide-react';
 import type { YGOCard } from '@/lib/ygoprodeck';
 import type { DeckCard } from '@/lib/deck-validation';
-import { getBanlistStatus, getMaxCopies, getBanlistLabel, getBanlistColor, isCardLegalByDate, getDateIllegalReason, type Format } from '@/lib/banlist';
+import { getBanlistStatus, getMaxCopies, getBanlistLabel, getBanlistColor, isCardLegalByDate, getDateIllegalReason, getGenesysPoints, type Format } from '@/lib/banlist';
 
 interface CardSearchProps {
   deckType: 'MAIN' | 'EXTRA' | 'SIDE';
@@ -140,11 +140,14 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
 
       // Si solo hay searchTerm sin otros filtros, hacer dos búsquedas paralelas
       if (searchTerm.trim() && !selectedType && !selectedAttribute && !selectedRace && !selectedLevel && !selectedArchetype) {
+        // Add format parameter for Genesys to get genesys_points
+        const formatParam = format === 'Genesys' ? '&format=genesys' : '';
+
         const [nameResults, descResults] = await Promise.all([
-          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes&fname=${encodeURIComponent(searchTerm)}`)
+          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes${formatParam}&fname=${encodeURIComponent(searchTerm)}`)
             .then(r => r.ok ? r.json() : { data: [] })
             .catch(() => ({ data: [] })),
-          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes&desc=${encodeURIComponent(searchTerm)}`)
+          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes${formatParam}&desc=${encodeURIComponent(searchTerm)}`)
             .then(r => r.ok ? r.json() : { data: [] })
             .catch(() => ({ data: [] }))
         ]);
@@ -159,6 +162,11 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
         // Si hay filtros adicionales, solo buscar por nombre
         let url = 'https://db.ygoprodeck.com/api/v7/cardinfo.php?';
         const params: string[] = ['misc=yes']; // Include banlist info
+
+        // Add format parameter for Genesys to get genesys_points
+        if (format === 'Genesys') {
+          params.push('format=genesys');
+        }
 
         if (searchTerm.trim()) params.push(`fname=${encodeURIComponent(searchTerm)}`);
         if (selectedType) params.push(`type=${encodeURIComponent(selectedType)}`);
@@ -267,7 +275,7 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
       return { canAdd: true };
     }
 
-    const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison'];
+    const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison', 'Genesys'];
     const banlistFormat: Format = validFormats.includes(format) ? (format as Format) : 'TCG';
 
     // Check date legality first (for GOAT/Edison formats)
@@ -581,7 +589,7 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 md:gap-4">
                 {searchResults.map((card) => {
-                  const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison'];
+                  const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison', 'Genesys'];
                   const banlistFormat: Format = format && validFormats.includes(format) ? (format as Format) : '';
                   const banlistStatus = banlistFormat ? getBanlistStatus(card, banlistFormat) : 'Unlimited';
                   const maxCopies = getMaxCopies(banlistStatus);
@@ -592,6 +600,7 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
                   const isAtLimit = currentCount >= maxCopies && maxCopies > 0;
                   const isDateIllegal = banlistFormat ? !isCardLegalByDate(card, banlistFormat) : false;
                   const isDisabled = isForbidden || isDateIllegal;
+                  const genesysPoints = format === 'Genesys' ? getGenesysPoints(card) : 0;
 
                   return (
                     <button
@@ -646,17 +655,29 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
                         </div>
                       )}
 
+                      {/* Genesys Points indicator */}
+                      {format === 'Genesys' && genesysPoints > 0 && (
+                        <div className="absolute bottom-2 left-2 z-10 bg-rola-gold text-black rounded-md px-2 py-1 font-bold text-xs shadow-lg">
+                          {genesysPoints} pts
+                        </div>
+                      )}
+
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
                         <div className="w-full">
                           <p className="text-xs font-medium text-white truncate">
                             {card.name}
                           </p>
+                          {format === 'Genesys' && genesysPoints > 0 && (
+                            <p className="text-[10px] text-rola-gold truncate mt-0.5">
+                              {genesysPoints} {genesysPoints === 1 ? 'punto' : 'puntos'} Genesys
+                            </p>
+                          )}
                           {format && isDateIllegal && (
                             <p className="text-[10px] text-purple-300 truncate mt-0.5">
                               {getDateIllegalReason(card, banlistFormat)}
                             </p>
                           )}
-                          {format && !isDateIllegal && banlistStatus !== 'Unlimited' && (
+                          {format && !isDateIllegal && banlistStatus !== 'Unlimited' && format !== 'Genesys' && (
                             <p className="text-[10px] text-gray-300 truncate mt-0.5">
                               {getBanlistLabel(banlistStatus)}
                             </p>

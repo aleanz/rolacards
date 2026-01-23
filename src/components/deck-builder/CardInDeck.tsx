@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Plus, Minus, X } from 'lucide-react';
 import type { DeckCard } from '@/lib/deck-validation';
-import { getBanlistStatus, getMaxCopies, type Format } from '@/lib/banlist';
+import { getBanlistStatus, getMaxCopies, getGenesysPoints, type Format } from '@/lib/banlist';
 
 interface CardInDeckProps {
   card: DeckCard;
@@ -33,7 +33,7 @@ export default function CardInDeck({
       return maxQuantity;
     }
 
-    const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison'];
+    const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison', 'Genesys'];
     const banlistFormat: Format = validFormats.includes(format) ? (format as Format) : 'TCG';
 
     // Obtener límite de banlist
@@ -60,6 +60,8 @@ export default function CardInDeck({
   };
 
   const effectiveMax = getEffectiveMaxQuantity();
+  const genesysPoints = format === 'Genesys' ? getGenesysPoints(cardData) : 0;
+  const showGenesysPoints = format === 'Genesys' && genesysPoints > 0;
 
   const handleIncrease = () => {
     if (card.quantity < effectiveMax) {
@@ -102,6 +104,11 @@ export default function CardInDeck({
         <p className="text-[10px] md:text-xs text-gray-400 truncate">
           {cardData?.type || 'Unknown Type'}
         </p>
+        {showGenesysPoints && (
+          <p className="text-[10px] md:text-xs text-rola-gold font-semibold">
+            {genesysPoints} {genesysPoints === 1 ? 'punto' : 'puntos'}
+          </p>
+        )}
       </div>
 
       {/* Quantity Controls */}

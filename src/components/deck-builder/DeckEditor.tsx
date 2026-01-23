@@ -57,7 +57,7 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
       return { toRemove: [], toKeep: cards };
     }
 
-    const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison'];
+    const validFormats = ['TCG', 'OCG', 'GOAT', 'Edison', 'Genesys'];
     const banlistFormat: Format = validFormats.includes(newFormat) ? (newFormat as Format) : 'TCG';
     const toRemove: DeckCard[] = [];
     const toKeep: DeckCard[] = [];
@@ -102,10 +102,46 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
     setShowFormatChangeModal(true);
   };
 
+  // Refresca los datos de las cartas para formato Genesys
+  const refreshCardsForGenesys = async (cardsToRefresh: DeckCard[]) => {
+    const updatedCards: DeckCard[] = [];
+
+    for (const card of cardsToRefresh) {
+      try {
+        const response = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${card.cardId}&format=genesys&misc=yes`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data && data.data[0]) {
+            updatedCards.push({
+              ...card,
+              cardData: data.data[0],
+            });
+          } else {
+            updatedCards.push(card);
+          }
+        } else {
+          updatedCards.push(card);
+        }
+      } catch (error) {
+        console.error('Error refreshing card data:', error);
+        updatedCards.push(card);
+      }
+    }
+
+    return updatedCards;
+  };
+
   // Confirma el cambio de formato y aplica los cambios
-  const confirmFormatChange = () => {
+  const confirmFormatChange = async () => {
     if (formatChangePreview) {
-      setCards(formatChangePreview.toKeep);
+      let finalCards = formatChangePreview.toKeep;
+
+      // Si cambiamos a Genesys, refrescar datos de cartas para obtener puntos
+      if (pendingFormat === 'Genesys' && finalCards.length > 0) {
+        finalCards = await refreshCardsForGenesys(finalCards);
+      }
+
+      setCards(finalCards);
       setFormat(pendingFormat);
     }
     setShowFormatChangeModal(false);
@@ -233,6 +269,7 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
               <option value="OCG">OCG (Modern)</option>
               <option value="GOAT">GOAT Format (2005)</option>
               <option value="Edison">Edison Format (2010)</option>
+              <option value="Genesys">Genesys (Sistema de Puntos)</option>
             </select>
             <p className="text-xs text-gray-500 mt-1">
               Selecciona un formato antes de agregar cartas
@@ -315,7 +352,11 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
         {/* Sidebar */}
         <div className="space-y-4 md:space-y-6">
           {/* Stats */}
-          <DeckStats cards={cards} />
+          <DeckStats
+            cards={cards}
+            format={format}
+            onRefreshGenesysData={setCards}
+          />
 
           {/* Validation */}
           <DeckValidation validationResult={validation} />
