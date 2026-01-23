@@ -1,6 +1,3 @@
-// Prisma Schema for Rola Cards
-// TCG Card Shop Management System
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,195 +7,249 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// USER & AUTHENTICATION
-// ============================================
-
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String
-  role          Role      @default(STAFF)
-  avatar        String?
-  emailVerified Boolean   @default(false)
-  verificationToken String? @unique
-  konamiId      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  sales         Sale[]
-  createdEvents Event[]   @relation("EventCreator")
-  createdNews   News[]    @relation("NewsCreator")
-  decks         Deck[]
-  registrations EventRegistration[]
+model Category {
+  id          String    @id
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  order       Int       @default(0)
+  Product     Product[]
 }
 
-enum Role {
-  ADMIN
-  STAFF
-  CLIENTE
+model Deck {
+  id                String              @id
+  name              String
+  description       String?
+  format            String?
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  userId            String
+  User              User                @relation(fields: [userId], references: [id])
+  DeckCard          DeckCard[]
+  EventRegistration EventRegistration[]
+
+  @@index([userId])
 }
 
-// ============================================
-// EVENTS & TOURNAMENTS
-// ============================================
+model DeckCard {
+  id       String   @id
+  cardId   Int
+  quantity Int      @default(1)
+  deckType DeckType
+  cardData Json
+  deckId   String
+  Deck     Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, cardId, deckType])
+  @@index([deckId])
+}
 
 model Event {
-  id          String      @id @default(cuid())
-  title       String
-  slug        String      @unique
-  description String?     @db.Text
-  content     String?     @db.Text
-  date        DateTime
-  endDate     DateTime?
-  location    String?
-  type        EventType
-  format      String?     // Tournament format (Standard, Advanced, etc.)
-  entryFee    Decimal?    @db.Decimal(10, 2)
-  maxPlayers  Int?
-  prizeInfo   String?     @db.Text
-  imageUrl    String?
-  published   Boolean     @default(false)
-  featured    Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  creatorId   String
-  creator     User        @relation("EventCreator", fields: [creatorId], references: [id])
-  registrations EventRegistration[]
+  id                  String              @id
+  title               String
+  slug                String              @unique
+  description         String?
+  content             String?
+  date                DateTime
+  endDate             DateTime?
+  location            String?
+  type                EventType
+  format              String?
+  genesysPointsLimit  Int?
+  entryFee            Decimal?            @db.Decimal(10, 2)
+  maxPlayers          Int?
+  prizeInfo           String?
+  imageUrl            String?
+  published           Boolean             @default(false)
+  featured            Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime
+  creatorId           String
+  User                User                @relation(fields: [creatorId], references: [id])
+  EventRegistration   EventRegistration[]
 
   @@index([date])
+  @@index([published])
   @@index([type])
-  @@index([published])
 }
 
-enum EventType {
-  TOURNAMENT
-  SNEAK_PEEK
-  LOCALS
-  SPECIAL_EVENT
-  ANNOUNCEMENT
+model EventRegistration {
+  id                String             @id
+  status            RegistrationStatus @default(PENDIENTE)
+  rejectionNote     String?
+  konamiId          String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime
+  userId            String
+  eventId           String
+  deckId            String
+  paymentProof      String?
+  paymentProofType  String?
+  paymentVerified   Boolean            @default(false)
+  transferReference String?
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  Deck              Deck               @relation(fields: [deckId], references: [id])
+  Event             Event              @relation(fields: [eventId], references: [id])
+  User              User               @relation(fields: [userId], references: [id])
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+  @@index([status])
 }
-
-// ============================================
-// NEWS & ANNOUNCEMENTS
-// ============================================
-
-model News {
-  id          String    @id @default(cuid())
-  title       String
-  slug        String    @unique
-  excerpt     String?   @db.VarChar(300)
-  content     String    @db.Text
-  imageUrl    String?
-  category    NewsCategory
-  published   Boolean   @default(false)
-  featured    Boolean   @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // Relations
-  creatorId   String
-  creator     User      @relation("NewsCreator", fields: [creatorId], references: [id])
-  
-  @@index([category])
-  @@index([published])
-  @@index([publishedAt])
-}
-
-enum NewsCategory {
-  NEWS
-  PROMO
-  UPDATE
-  GUIDE
-}
-
-// ============================================
-// GALLERY & MEDIA
-// ============================================
 
 model GalleryImage {
-  id          String    @id @default(cuid())
+  id          String          @id
   title       String?
   description String?
   url         String
   thumbnail   String?
   category    GalleryCategory @default(STORE)
-  order       Int       @default(0)
-  published   Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+  order       Int             @default(0)
+  published   Boolean         @default(true)
+  createdAt   DateTime        @default(now())
 
   @@index([category])
   @@index([order])
 }
 
-enum GalleryCategory {
-  STORE
-  EVENTS
-  PRODUCTS
-  COMMUNITY
-}
+model News {
+  id          String       @id
+  title       String
+  slug        String       @unique
+  excerpt     String?      @db.VarChar(300)
+  content     String
+  imageUrl    String?
+  category    NewsCategory
+  published   Boolean      @default(false)
+  featured    Boolean      @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  creatorId   String
+  User        User         @relation(fields: [creatorId], references: [id])
 
-// ============================================
-// PRODUCTS & INVENTORY
-// ============================================
+  @@index([category])
+  @@index([publishedAt])
+  @@index([published])
+}
 
 model Product {
-  id          String        @id @default(cuid())
-  sku         String        @unique
-  name        String
-  description String?       @db.Text
-  type        ProductType
-  price       Decimal       @db.Decimal(10, 2)
-  cost        Decimal?      @db.Decimal(10, 2)
-  stock       Int           @default(0)
-  minStock    Int           @default(0)
-  imageUrl    String?
-  
-  // Card-specific fields (for singles)
-  cardId      Int?          // YGOProDeck card ID
-  cardName    String?
-  cardSet     String?
-  cardRarity  String?
+  id            String         @id
+  sku           String         @unique
+  name          String
+  description   String?
+  type          ProductType
+  price         Decimal        @db.Decimal(10, 2)
+  cost          Decimal?       @db.Decimal(10, 2)
+  stock         Int            @default(0)
+  minStock      Int            @default(0)
+  imageUrl      String?
+  cardId        Int?
+  cardName      String?
+  cardSet       String?
+  cardRarity    String?
   cardCondition CardCondition?
-  cardLanguage String?      @default("en")
-  cardData    Json?         // Cached data from YGOProDeck API
-  
-  // Sealed product fields
-  setCode     String?
-  releaseDate DateTime?
-  arrivalDate DateTime?     // Fecha de llegada a tienda
-  location    String?       // Ubicación en tienda
-  notes       String?       @db.Text
+  cardLanguage  String?        @default("en")
+  cardData      Json?
+  setCode       String?
+  releaseDate   DateTime?
+  arrivalDate   DateTime?
+  location      String?
+  notes         String?
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  categoryId    String?
+  Category      Category?      @relation(fields: [categoryId], references: [id])
+  SaleItem      SaleItem[]
+  StockHistory  StockHistory[]
 
-  active      Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
-  // Relations
-  categoryId  String?
-  category    Category?     @relation(fields: [categoryId], references: [id])
-  saleItems   SaleItem[]
-  stockHistory StockHistory[]
-  
-  @@index([type])
-  @@index([cardId])
   @@index([active])
+  @@index([cardId])
   @@index([stock])
+  @@index([type])
 }
 
-enum ProductType {
-  SINGLE        // Individual card
-  BOOSTER       // Booster pack
-  BOX           // Booster box
-  STRUCTURE     // Structure deck
-  TIN           // Collector tin
-  ACCESSORY     // Sleeves, mats, etc.
-  OTHER
+model Sale {
+  id            String        @id
+  number        Int           @unique @default(autoincrement())
+  date          DateTime      @default(now())
+  subtotal      Decimal       @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  tax           Decimal       @default(0) @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  status        SaleStatus    @default(COMPLETED)
+  notes         String?
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  userId        String
+  User          User          @relation(fields: [userId], references: [id])
+  SaleItem      SaleItem[]
+
+  @@index([date])
+  @@index([status])
+  @@index([userId])
+}
+
+model SaleItem {
+  id        String  @id
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  discount  Decimal @default(0) @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+  saleId    String
+  productId String
+  Product   Product @relation(fields: [productId], references: [id])
+  Sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([saleId])
+}
+
+model StockHistory {
+  id            String        @id
+  productId     String
+  type          StockMovement
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  note          String?
+  createdAt     DateTime      @default(now())
+  Product       Product       @relation(fields: [productId], references: [id])
+
+  @@index([createdAt])
+  @@index([productId])
+}
+
+model StoreSetting {
+  id        String      @id
+  key       String      @unique
+  value     String
+  type      SettingType @default(STRING)
+  updatedAt DateTime
+}
+
+model User {
+  id                String              @id
+  email             String              @unique
+  password          String
+  name              String
+  role              Role                @default(STAFF)
+  avatar            String?
+  emailVerified     Boolean             @default(false)
+  verificationToken String?             @unique
+  konamiId          String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  Deck              Deck[]
+  Event             Event[]
+  EventRegistration EventRegistration[]
+  News              News[]
+  Sale              Sale[]
 }
 
 enum CardCondition {
@@ -210,86 +261,32 @@ enum CardCondition {
   DAMAGED
 }
 
-model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  order       Int       @default(0)
-  
-  // Relations
-  products    Product[]
+enum DeckType {
+  MAIN
+  EXTRA
+  SIDE
 }
 
-model StockHistory {
-  id          String          @id @default(cuid())
-  productId   String
-  product     Product         @relation(fields: [productId], references: [id])
-  type        StockMovement
-  quantity    Int
-  previousStock Int
-  newStock    Int
-  note        String?
-  createdAt   DateTime        @default(now())
-  
-  @@index([productId])
-  @@index([createdAt])
+enum EventType {
+  TOURNAMENT
+  SNEAK_PEEK
+  LOCALS
+  SPECIAL_EVENT
+  ANNOUNCEMENT
 }
 
-enum StockMovement {
-  PURCHASE    // Stock added from supplier
-  SALE        // Stock reduced from sale
-  ADJUSTMENT  // Manual adjustment
-  RETURN      // Customer return
-  DAMAGE      // Damaged/lost
+enum GalleryCategory {
+  STORE
+  EVENTS
+  PRODUCTS
+  COMMUNITY
 }
 
-// ============================================
-// SALES
-// ============================================
-
-model Sale {
-  id          String      @id @default(cuid())
-  number      Int         @unique @default(autoincrement())
-  date        DateTime    @default(now())
-  subtotal    Decimal     @db.Decimal(10, 2)
-  discount    Decimal     @default(0) @db.Decimal(10, 2)
-  tax         Decimal     @default(0) @db.Decimal(10, 2)
-  total       Decimal     @db.Decimal(10, 2)
-  paymentMethod PaymentMethod
-  status      SaleStatus  @default(COMPLETED)
-  notes       String?
-  
-  // Customer info (optional)
-  customerName  String?
-  customerEmail String?
-  customerPhone String?
-  
-  // Relations
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
-  items       SaleItem[]
-  
-  @@index([date])
-  @@index([userId])
-  @@index([status])
-}
-
-model SaleItem {
-  id          String    @id @default(cuid())
-  quantity    Int
-  unitPrice   Decimal   @db.Decimal(10, 2)
-  discount    Decimal   @default(0) @db.Decimal(10, 2)
-  total       Decimal   @db.Decimal(10, 2)
-  
-  // Relations
-  saleId      String
-  sale        Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product   @relation(fields: [productId], references: [id])
-  
-  @@index([saleId])
-  @@index([productId])
+enum NewsCategory {
+  NEWS
+  PROMO
+  UPDATE
+  GUIDE
 }
 
 enum PaymentMethod {
@@ -299,23 +296,33 @@ enum PaymentMethod {
   MIXED
 }
 
+enum ProductType {
+  SINGLE
+  BOOSTER
+  BOX
+  STRUCTURE
+  TIN
+  ACCESSORY
+  OTHER
+}
+
+enum RegistrationStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CLIENTE
+}
+
 enum SaleStatus {
   PENDING
   COMPLETED
   CANCELLED
   REFUNDED
-}
-
-// ============================================
-// STORE SETTINGS
-// ============================================
-
-model StoreSetting {
-  id          String    @id @default(cuid())
-  key         String    @unique
-  value       String    @db.Text
-  type        SettingType @default(STRING)
-  updatedAt   DateTime  @updatedAt
 }
 
 enum SettingType {
@@ -325,75 +332,10 @@ enum SettingType {
   JSON
 }
 
-// ============================================
-// DECK BUILDER & EVENT REGISTRATIONS
-// ============================================
-
-model EventRegistration {
-  id              String              @id @default(cuid())
-  status          RegistrationStatus  @default(PENDIENTE)
-  rejectionNote   String?             @db.Text
-  konamiId        String?
-  paymentProof    String?             // URL del comprobante de pago (imagen o PDF)
-  paymentProofType String?            // image/jpeg, image/png, application/pdf
-  transferReference String?           // Referencia de transferencia SPEI
-  paymentVerified Boolean             @default(false)
-  verifiedAt      DateTime?
-  verifiedBy      String?             // ID del staff que verificó el pago
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-
-  userId        String
-  user          User                @relation(fields: [userId], references: [id])
-  eventId       String
-  event         Event               @relation(fields: [eventId], references: [id])
-  deckId        String
-  deck          Deck                @relation(fields: [deckId], references: [id])
-
-  @@unique([userId, eventId])
-  @@index([eventId, status])
-  @@index([status])
-}
-
-enum RegistrationStatus {
-  PENDIENTE
-  APROBADO
-  RECHAZADO
-}
-
-model Deck {
-  id          String   @id @default(cuid())
-  name        String
-  description String?  @db.Text
-  format      String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  cards       DeckCard[]
-  registrations EventRegistration[]
-
-  @@index([userId])
-}
-
-model DeckCard {
-  id       String   @id @default(cuid())
-  cardId   Int
-  quantity Int      @default(1)
-  deckType DeckType
-  cardData Json
-
-  deckId   String
-  deck     Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
-
-  @@unique([deckId, cardId, deckType])
-  @@index([deckId])
-}
-
-enum DeckType {
-  MAIN
-  EXTRA
-  SIDE
+enum StockMovement {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  RETURN
+  DAMAGE
 }
