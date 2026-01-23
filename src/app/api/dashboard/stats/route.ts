@@ -139,9 +139,9 @@ export async function GET() {
     const lastSale = await prisma.sale.findFirst({
       orderBy: { date: 'desc' },
       include: {
-        items: {
+        SaleItem: {
           include: {
-            product: true,
+            Product: true,
           },
           take: 1,
         },
@@ -149,7 +149,7 @@ export async function GET() {
     });
 
     if (lastSale) {
-      const productName = lastSale.items[0]?.product.cardName || lastSale.items[0]?.product.name;
+      const productName = lastSale.SaleItem[0]?.Product.cardName || lastSale.SaleItem[0]?.Product.name;
       const minutesAgo = Math.floor((now.getTime() - new Date(lastSale.date).getTime()) / 60000);
       recentActivity.push({
         action: 'Nueva venta',

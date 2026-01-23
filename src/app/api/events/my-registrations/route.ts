@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         userId: session.user.id,
       },
       include: {
-        event: {
+        Event: {
           select: {
             id: true,
             title: true,
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
             location: true,
           },
         },
-        deck: {
+        Deck: {
           select: {
             id: true,
             name: true,

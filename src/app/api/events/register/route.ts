@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { calculateGenesysPoints, validateDeckAgainstBanlist } from '@/lib/banlist';
+import { sendRegistrationCreatedEmail, sendAdminNotificationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        registrations: {
+        EventRegistration: {
           where: {
             status: { in: ['PENDIENTE', 'APROBADO'] },
           },
@@ -43,8 +45,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
     }
 
+    // Verificar que el evento está vigente (no ha pasado)
+    const now = new Date();
+    if (event.date < now) {
+      return NextResponse.json(
+        { error: 'Este evento ya pasó. No se pueden realizar nuevas inscripciones.' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que el tipo de evento permite inscripciones
+    const allowedEventTypes = ['TOURNAMENT', 'SNEAK_PEEK'];
+    if (!allowedEventTypes.includes(event.type)) {
+      return NextResponse.json(
+        { error: 'Este tipo de evento no permite inscripciones. Solo puedes inscribirte en torneos y sneak peeks.' },
+        { status: 400 }
+      );
+    }
+
     // Verificar que hay cupo disponible
-    if (event.maxPlayers && event.registrations.length >= event.maxPlayers) {
+    if (event.maxPlayers && event.EventRegistration.length >= event.maxPlayers) {
       return NextResponse.json(
         { error: 'No hay cupo disponible para este evento' },
         { status: 400 }
@@ -54,6 +74,9 @@ export async function POST(req: NextRequest) {
     // Verificar que el mazo existe y pertenece al usuario
     const deck = await prisma.deck.findUnique({
       where: { id: deckId },
+      include: {
+        DeckCard: true,
+      },
     });
 
     if (!deck || deck.userId !== session.user.id) {
@@ -71,6 +94,47 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Validar el mazo contra la banlist del formato
+    if (event.format) {
+      // Transform DeckCard to the format expected by validateDeckAgainstBanlist
+      const deckCards = deck.DeckCard.map(card => ({
+        cardData: card.cardData,
+        quantity: card.quantity,
+        placement: card.deckType.toLowerCase(),
+      }));
+
+      const banlistErrors = validateDeckAgainstBanlist(deckCards, event.format as any);
+
+      if (banlistErrors.length > 0) {
+        const errorMessages = banlistErrors.map(err =>
+          `${err.cardName}: ${err.reason} (tienes ${err.quantity}, máximo ${err.maxAllowed})`
+        ).join('; ');
+
+        return NextResponse.json(
+          {
+            error: `Tu mazo no cumple con las reglas de banlist del formato ${event.format}`,
+            details: errorMessages,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Verificar límite de puntos Genesys si el formato es Genesys
+    if (event.format === 'genesys' && (event as any).genesysPointsLimit) {
+      const deckPoints = calculateGenesysPoints(deck.DeckCard);
+      const pointsLimit = (event as any).genesysPointsLimit;
+
+      if (deckPoints > pointsLimit) {
+        return NextResponse.json(
+          {
+            error: `Tu mazo excede el límite de puntos Genesys. Tiene ${deckPoints} puntos y el límite es ${pointsLimit}`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Verificar que no esté ya inscrito
@@ -121,6 +185,7 @@ export async function POST(req: NextRequest) {
     // Crear la solicitud de inscripción
     const registration = await prisma.eventRegistration.create({
       data: {
+        id: randomUUID(),
         userId: session.user.id,
         eventId: eventId,
         deckId: deckId,
@@ -128,26 +193,65 @@ export async function POST(req: NextRequest) {
         paymentProof: paymentProofUrl,
         paymentProofType: paymentProofType,
         status: 'PENDIENTE',
+        updatedAt: new Date(),
       },
       include: {
-        user: {
+        User: {
           select: {
             name: true,
             email: true,
           },
         },
-        event: {
+        Event: {
           select: {
             title: true,
+            date: true,
           },
         },
-        deck: {
+        Deck: {
           select: {
             name: true,
           },
         },
       },
     });
+
+    // Enviar correo de confirmación al usuario
+    await sendRegistrationCreatedEmail(
+      registration.User.email!,
+      registration.User.name || 'Usuario',
+      registration.Event.title,
+      registration.Event.date,
+      registration.Deck.name,
+      !!paymentProofUrl
+    );
+
+    // Obtener emails de todos los admins/staff
+    const admins = await prisma.user.findMany({
+      where: {
+        role: {
+          in: ['ADMIN', 'STAFF'],
+        },
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    const adminEmails = admins.map(admin => admin.email).filter((email): email is string => !!email);
+
+    // Enviar notificación a admins
+    if (adminEmails.length > 0) {
+      await sendAdminNotificationEmail(
+        adminEmails,
+        registration.User.name || 'Usuario',
+        registration.User.email!,
+        registration.Event.title,
+        registration.Deck.name,
+        registration.id,
+        !!paymentProofUrl
+      );
+    }
 
     return NextResponse.json({
       message: 'Solicitud de inscripción enviada exitosamente',

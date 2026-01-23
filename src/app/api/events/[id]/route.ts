@@ -15,7 +15,7 @@ export async function GET(
     const event = await prisma.event.findUnique({
       where: { id: params.id },
       include: {
-        creator: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -58,6 +58,7 @@ export async function PATCH(
       location,
       type,
       format,
+      genesysPointsLimit,
       entryFee,
       maxPlayers,
       prizeInfo,
@@ -77,6 +78,7 @@ export async function PATCH(
     if (location !== undefined) updateData.location = location;
     if (type !== undefined) updateData.type = type;
     if (format !== undefined) updateData.format = format;
+    if (genesysPointsLimit !== undefined) updateData.genesysPointsLimit = genesysPointsLimit ? parseInt(genesysPointsLimit) : null;
     if (entryFee !== undefined) updateData.entryFee = entryFee ? parseFloat(entryFee) : null;
     if (maxPlayers !== undefined) updateData.maxPlayers = maxPlayers ? parseInt(maxPlayers) : null;
     if (prizeInfo !== undefined) updateData.prizeInfo = prizeInfo;
@@ -109,7 +111,7 @@ export async function PATCH(
       where: { id: params.id },
       data: updateData,
       include: {
-        creator: {
+        User: {
           select: {
             id: true,
             name: true,

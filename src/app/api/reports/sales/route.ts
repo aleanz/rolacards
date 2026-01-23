@@ -47,15 +47,15 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
-        user: {
+        User: {
           select: {
             name: true,
             email: true,
           },
         },
-        items: {
+        SaleItem: {
           include: {
-            product: {
+            Product: {
               select: {
                 sku: true,
                 name: true,
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       .reduce((sum, sale) => {
         return (
           sum +
-          sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0)
+          sale.SaleItem.reduce((itemSum, item) => itemSum + item.quantity, 0)
         );
       }, 0);
 
@@ -108,13 +108,13 @@ export async function GET(request: NextRequest) {
     sales
       .filter((s) => s.status === 'COMPLETED')
       .forEach((sale) => {
-        sale.items.forEach((item) => {
-          const productName = item.product.cardName || item.product.name;
+        sale.SaleItem.forEach((item) => {
+          const productName = item.Product.cardName || item.Product.name;
           if (!productSales[productName]) {
             productSales[productName] = {
               name: productName,
-              sku: item.product.sku,
-              type: item.product.type,
+              sku: item.Product.sku,
+              type: item.Product.type,
               quantity: 0,
               revenue: 0,
             };
@@ -149,20 +149,20 @@ export async function GET(request: NextRequest) {
       customerName: sale.customerName || 'Sin nombre',
       customerEmail: sale.customerEmail || '',
       customerPhone: sale.customerPhone || '',
-      user: sale.user.name,
-      userEmail: sale.user.email,
-      itemsCount: sale.items.length,
-      totalItems: sale.items.reduce((sum, item) => sum + item.quantity, 0),
+      User: sale.User.name,
+      userEmail: sale.User.email,
+      itemsCount: sale.SaleItem.length,
+      totalItems: sale.SaleItem.reduce((sum, item) => sum + item.quantity, 0),
       subtotal: parseFloat(sale.subtotal.toString()),
       discount: parseFloat(sale.discount.toString()),
       total: parseFloat(sale.total.toString()),
       paymentMethod: sale.paymentMethod,
       status: sale.status,
       notes: sale.notes || '',
-      items: sale.items.map((item) => ({
-        productName: item.product.cardName || item.product.name,
-        sku: item.product.sku,
-        type: item.product.type,
+      SaleItem: sale.SaleItem.map((item) => ({
+        productName: item.Product.cardName || item.Product.name,
+        sku: item.Product.sku,
+        type: item.Product.type,
         quantity: item.quantity,
         unitPrice: parseFloat(item.unitPrice.toString()),
         discount: parseFloat(item.discount.toString()),

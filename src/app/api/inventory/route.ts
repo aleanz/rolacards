@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 // GET /api/inventory - Listar productos
 export async function GET(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where,
       include: {
-        category: true,
+        Category: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
     // Crear producto
     const product = await prisma.product.create({
       data: {
+        id: randomUUID(),
         sku,
         name,
         description,
@@ -124,9 +126,10 @@ export async function POST(request: NextRequest) {
         location,
         notes,
         active: active !== undefined ? active : true,
+        updatedAt: new Date(),
       },
       include: {
-        category: true,
+        Category: true,
       },
     });
 

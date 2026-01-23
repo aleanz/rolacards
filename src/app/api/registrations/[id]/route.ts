@@ -25,7 +25,7 @@ export async function GET(
     const registration = await prisma.eventRegistration.findUnique({
       where: { id: params.id },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -33,7 +33,7 @@ export async function GET(
             konamiId: true,
           },
         },
-        event: {
+        Event: {
           select: {
             id: true,
             title: true,
@@ -49,9 +49,9 @@ export async function GET(
             imageUrl: true,
           },
         },
-        deck: {
+        Deck: {
           include: {
-            cards: {
+            DeckCard: {
               orderBy: {
                 deckType: 'asc',
               },
@@ -150,13 +150,13 @@ export async function PATCH(
         rejectionNote: status === 'RECHAZADO' ? rejectionNote : null,
       },
       include: {
-        user: {
+        User: {
           select: {
             name: true,
             email: true,
           },
         },
-        event: {
+        Event: {
           select: {
             title: true,
           },

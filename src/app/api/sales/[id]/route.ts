@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 export async function GET(
   request: NextRequest,
@@ -16,16 +17,16 @@ export async function GET(
     const sale = await prisma.sale.findUnique({
       where: { id: params.id },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        items: {
+        SaleItem: {
           include: {
-            product: {
+            Product: {
               select: {
                 id: true,
                 sku: true,
@@ -65,7 +66,7 @@ export async function DELETE(
     await prisma.$transaction(async (tx) => {
       const sale = await tx.sale.findUnique({
         where: { id: params.id },
-        include: { items: true },
+        include: { SaleItem: true },
       });
 
       if (!sale) {
@@ -73,7 +74,7 @@ export async function DELETE(
       }
 
       // Devolver stock
-      for (const item of sale.items) {
+      for (const item of sale.SaleItem) {
         const product = await tx.product.findUnique({
           where: { id: item.productId },
         });
@@ -87,6 +88,7 @@ export async function DELETE(
 
         await tx.stockHistory.create({
           data: {
+            id: randomUUID(),
             productId: item.productId,
             type: 'RETURN',
             quantity: item.quantity,

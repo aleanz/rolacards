@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { validateDeck } from '@/lib/deck-validation';
+import { randomUUID } from 'crypto';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -35,15 +36,15 @@ export async function GET(request: NextRequest) {
         userId,
       },
       include: {
-        cards: {
+        DeckCard: {
           orderBy: {
             deckType: 'asc',
           },
         },
         _count: {
           select: {
-            cards: true,
-            registrations: true,
+            DeckCard: true,
+            EventRegistration: true,
           },
         },
       },
@@ -98,12 +99,15 @@ export async function POST(request: NextRequest) {
     // Create deck with cards
     const deck = await prisma.deck.create({
       data: {
+        id: randomUUID(),
         name,
         description,
         format,
         userId: session.user.id,
-        cards: {
+        updatedAt: new Date(),
+        DeckCard: {
           create: cards.map((card: any) => ({
+            id: randomUUID(),
             cardId: card.cardId,
             quantity: card.quantity,
             deckType: card.deckType,
@@ -112,7 +116,7 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        cards: true,
+        DeckCard: true,
       },
     });
 

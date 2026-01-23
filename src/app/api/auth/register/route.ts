@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import prisma from '@/lib/prisma';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 
 // Force dynamic rendering
@@ -57,12 +57,14 @@ export async function POST(request: NextRequest) {
     // Crear usuario con rol CLIENTE
     const user = await prisma.user.create({
       data: {
+        id: randomUUID(),
         name,
         email,
         password: hashedPassword,
         role: 'CLIENTE',
         emailVerified: false,
         verificationToken,
+        updatedAt: new Date(),
       },
     });
 

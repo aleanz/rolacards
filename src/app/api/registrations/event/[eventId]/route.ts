@@ -53,7 +53,7 @@ export async function GET(
         eventId: params.eventId,
       },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -61,9 +61,9 @@ export async function GET(
             konamiId: true,
           },
         },
-        deck: {
+        Deck: {
           include: {
-            cards: {
+            DeckCard: {
               orderBy: {
                 deckType: 'asc',
               },

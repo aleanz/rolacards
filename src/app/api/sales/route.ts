@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,16 +33,16 @@ export async function GET(request: NextRequest) {
     const sales = await prisma.sale.findMany({
       where,
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        items: {
+        SaleItem: {
           include: {
-            product: {
+            Product: {
               select: {
                 id: true,
                 sku: true,
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
     // Calcular totales
     let subtotal = 0;
     const processedItems: Array<{
+      id: string;
       productId: string;
       quantity: number;
       unitPrice: any;
@@ -130,6 +132,7 @@ export async function POST(request: NextRequest) {
       subtotal += itemTotal;
 
       processedItems.push({
+        id: randomUUID(),
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: product!.price,
@@ -146,6 +149,7 @@ export async function POST(request: NextRequest) {
       // Crear la venta
       const newSale = await tx.sale.create({
         data: {
+          id: randomUUID(),
           userId: session.user.id,
           subtotal,
           discount,
@@ -156,17 +160,17 @@ export async function POST(request: NextRequest) {
           customerEmail,
           customerPhone,
           notes,
-          items: {
+          SaleItem: {
             create: processedItems,
           },
         },
         include: {
-          items: {
+          SaleItem: {
             include: {
-              product: true,
+              Product: true,
             },
           },
-          user: {
+          User: {
             select: {
               id: true,
               name: true,
@@ -191,6 +195,7 @@ export async function POST(request: NextRequest) {
 
         await tx.stockHistory.create({
           data: {
+            id: randomUUID(),
             productId: item.productId,
             type: 'SALE',
             quantity: item.quantity,

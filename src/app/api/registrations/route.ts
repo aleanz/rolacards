@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { validateRegistration, validateKonamiId } from '@/lib/registration-validation';
+import { randomUUID } from 'crypto';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     const registrations = await prisma.eventRegistration.findMany({
       where,
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
             konamiId: true,
           },
         },
-        event: {
+        Event: {
           select: {
             id: true,
             title: true,
@@ -64,14 +65,14 @@ export async function GET(request: NextRequest) {
             imageUrl: true,
           },
         },
-        deck: {
+        Deck: {
           select: {
             id: true,
             name: true,
             format: true,
             _count: {
               select: {
-                cards: true,
+                DeckCard: true,
               },
             },
           },
@@ -139,20 +140,22 @@ export async function POST(request: NextRequest) {
     // Create registration
     const registration = await prisma.eventRegistration.create({
       data: {
+        id: randomUUID(),
         userId: session.user.id,
         eventId,
         deckId,
         konamiId,
         status: 'PENDIENTE',
+        updatedAt: new Date(),
       },
       include: {
-        event: {
+        Event: {
           select: {
             title: true,
             date: true,
           },
         },
-        deck: {
+        Deck: {
           select: {
             name: true,
           },

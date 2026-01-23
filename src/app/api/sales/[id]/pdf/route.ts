@@ -17,16 +17,16 @@ export async function GET(
     const sale = await prisma.sale.findUnique({
       where: { id: params.id },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        items: {
+        SaleItem: {
           include: {
-            product: true,
+            Product: true,
           },
         },
       },
@@ -57,8 +57,15 @@ export async function GET(
       return acc;
     }, {});
 
+    // Transform sale data to match expected format
+    const saleData = {
+      ...sale,
+      user: sale.User,
+      items: sale.SaleItem,
+    };
+
     // Generar PDF
-    const pdfBuffer = await generateSaleReceipt(sale, storeInfo);
+    const pdfBuffer = await generateSaleReceipt(saleData as any, storeInfo);
 
     return new NextResponse(pdfBuffer as any, {
       headers: {

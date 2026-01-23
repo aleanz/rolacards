@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { validateDeck } from '@/lib/deck-validation';
 import { canDeleteDeck } from '@/lib/registration-validation';
+import { randomUUID } from 'crypto';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -26,12 +27,12 @@ export async function GET(
     const deck = await prisma.deck.findUnique({
       where: { id: params.id },
       include: {
-        cards: {
+        DeckCard: {
           orderBy: {
             deckType: 'asc',
           },
         },
-        user: {
+        User: {
           select: {
             name: true,
             email: true,
@@ -131,6 +132,7 @@ export async function PUT(
 
       await prisma.deckCard.createMany({
         data: cards.map((card: any) => ({
+          id: randomUUID(),
           deckId: params.id,
           cardId: card.cardId,
           quantity: card.quantity,
@@ -147,9 +149,10 @@ export async function PUT(
         name: name || deck.name,
         description,
         format,
+        updatedAt: new Date(),
       },
       include: {
-        cards: true,
+        DeckCard: true,
       },
     });
 
