@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { nanoid } from 'nanoid';
+import { Prisma } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Calcular total
     const unitPrice = product.price;
-    const total = parseFloat(unitPrice.toString()) * quantity;
+    const totalAmount = parseFloat(unitPrice.toString()) * quantity;
 
     // Crear la orden
     const order = await prisma.order.create({
@@ -62,8 +63,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         productId: product.id,
         quantity,
-        unitPrice,
-        total,
+        unitPrice: new Prisma.Decimal(unitPrice.toString()),
+        total: new Prisma.Decimal(totalAmount.toFixed(2)),
         paymentProofUrl,
         status: 'PENDING',
         updatedAt: new Date(),
