@@ -14,9 +14,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('[Orders API] Request body:', JSON.stringify(body, null, 2));
     const { productId, quantity, paymentProofUrl } = body;
 
     if (!productId || !quantity || !paymentProofUrl) {
+      console.log('[Orders API] Missing fields:', { productId, quantity, paymentProofUrl });
       return NextResponse.json(
         { error: 'Faltan campos requeridos' },
         { status: 400 }
@@ -24,9 +26,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener el producto
+    console.log('[Orders API] Fetching product with ID:', productId);
     const product = await prisma.product.findUnique({
       where: { id: productId },
     });
+    console.log('[Orders API] Product found:', product ? 'YES' : 'NO');
 
     if (!product) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
@@ -81,11 +85,16 @@ export async function POST(request: NextRequest) {
 
     // TODO: Enviar email de notificación al usuario y al admin
 
+    console.log('[Orders API] Order created successfully:', order.id);
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('[Orders API] Error creating order:', error);
+    console.error('[Orders API] Error stack:', error instanceof Error ? error.stack : 'No stack');
     return NextResponse.json(
-      { error: 'Error al crear la orden' },
+      {
+        error: 'Error al crear la orden',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
