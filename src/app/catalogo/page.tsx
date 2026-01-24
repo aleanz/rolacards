@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { Search, Filter, Package, DollarSign } from 'lucide-react';
+import { Search, Filter, Package } from 'lucide-react';
 import { Prisma } from '@prisma/client';
 
 type Product = {
@@ -206,9 +207,10 @@ export default function CatalogoPage() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                   {products.map((product) => (
-                    <div
+                    <Link
                       key={product.id}
-                      className="card p-3 sm:p-4 hover:border-rola-gold transition-all group"
+                      href={`/catalogo/${product.id}`}
+                      className="card p-3 sm:p-4 hover:border-rola-gold transition-all group cursor-pointer"
                     >
                       {/* Image */}
                       <div className="relative aspect-[3/4] mb-4 bg-rola-gray/30 rounded-lg overflow-hidden">
@@ -263,12 +265,9 @@ export default function CatalogoPage() {
 
                         <div className="pt-2 border-t border-rola-gray/30">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4 text-rola-gold" />
-                              <span className="text-rola-gold font-bold text-lg">
-                                ${parseFloat(product.price.toString()).toFixed(2)}
-                              </span>
-                            </div>
+                            <span className="text-rola-gold font-bold text-lg">
+                              ${parseFloat(product.price.toString()).toFixed(2)}
+                            </span>
                             <div className="flex items-center gap-1 text-gray-400 text-sm">
                               <Package className="w-4 h-4" />
                               <span>{product.stock} en stock</span>
@@ -276,7 +275,7 @@ export default function CatalogoPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>

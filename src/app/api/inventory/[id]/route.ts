@@ -20,7 +20,23 @@ export async function GET(
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    // Formatear para catálogo público
+    const formattedProduct = {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      sku: product.sku,
+      cardCode: product.setCode,
+      category: product.Category?.slug || 'OTHER',
+      condition: product.cardCondition,
+      rarity: product.cardRarity,
+      imageUrl: product.imageUrl,
+      active: product.active,
+    };
+
+    return NextResponse.json(formattedProduct);
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json({ error: 'Error al obtener producto' }, { status: 500 });

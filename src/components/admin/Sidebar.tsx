@@ -18,6 +18,7 @@ import {
   Menu,
   BarChart3,
   FileCheck,
+  ShoppingBag,
 } from 'lucide-react';
 
 const menuItems = [
@@ -63,6 +64,13 @@ const menuItems = [
     showBadge: true,
   },
   {
+    name: 'Órdenes de Compra',
+    href: '/admin/ordenes',
+    icon: ShoppingBag,
+    showBadge: true,
+    badgeType: 'orders',
+  },
+  {
     name: 'Buscador de Cartas',
     href: '/admin/buscador-cartas',
     icon: CreditCard,
@@ -84,6 +92,7 @@ export default function Sidebar({ user, onSignOut, isCollapsed, setIsCollapsed }
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -97,10 +106,25 @@ export default function Sidebar({ user, onSignOut, isCollapsed, setIsCollapsed }
       }
     };
 
+    const fetchPendingOrdersCount = async () => {
+      try {
+        const response = await fetch('/api/orders?status=PENDING');
+        if (!response.ok) return;
+        const data = await response.json();
+        setPendingOrdersCount(data.length);
+      } catch (error) {
+        console.error('Error fetching pending orders count:', error);
+      }
+    };
+
     fetchPendingCount();
+    fetchPendingOrdersCount();
 
     // Actualizar cada 30 segundos
-    const interval = setInterval(fetchPendingCount, 30000);
+    const interval = setInterval(() => {
+      fetchPendingCount();
+      fetchPendingOrdersCount();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -162,7 +186,8 @@ export default function Sidebar({ user, onSignOut, isCollapsed, setIsCollapsed }
             <ul className="space-y-1">
               {menuItems.map((item) => {
                 const isActive = pathname === item.href;
-                const showNotification = item.showBadge && pendingCount > 0;
+                const badgeCount = (item as any).badgeType === 'orders' ? pendingOrdersCount : pendingCount;
+                const showNotification = item.showBadge && badgeCount > 0;
                 return (
                   <li key={item.href}>
                     <Link
@@ -190,7 +215,7 @@ export default function Sidebar({ user, onSignOut, isCollapsed, setIsCollapsed }
                       <span className={cn('flex-1', isCollapsed && 'lg:hidden')}>{item.name}</span>
                       {showNotification && !isCollapsed && (
                         <span className="px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
-                          {pendingCount}
+                          {badgeCount}
                         </span>
                       )}
                     </Link>

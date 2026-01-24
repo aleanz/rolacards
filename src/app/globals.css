@@ -104,7 +104,11 @@ a:hover {
   .btn-outline {
     @apply bg-transparent border-2 border-rola-gold text-rola-gold hover:bg-rola-gold hover:text-rola-black focus:ring-rola-gold;
   }
-  
+
+  .btn-outline-red {
+    @apply bg-transparent border-2 border-rola-red text-rola-red hover:bg-rola-red hover:text-white focus:ring-rola-red;
+  }
+
   .btn-ghost {
     @apply bg-transparent text-gray-300 hover:text-rola-gold hover:bg-rola-gray/50;
   }
