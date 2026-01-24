@@ -131,9 +131,11 @@ export default function InventarioPage() {
     if (!file) return;
 
     setIsUploading(true);
+    setFormError('');
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
+      formDataUpload.append('type', 'products');
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -143,6 +145,7 @@ export default function InventarioPage() {
       if (!response.ok) {
         const error = await response.json();
         setFormError(error.error || 'Error al subir imagen');
+        toast.error(error.error || 'Error al subir imagen');
         return;
       }
 
@@ -153,8 +156,11 @@ export default function InventarioPage() {
       } else {
         setSealedProductForm((prev) => ({ ...prev, imageUrl: data.url }));
       }
+      toast.success('Imagen subida correctamente');
     } catch (error) {
-      setFormError('Error al subir imagen');
+      const errorMsg = 'Error al subir imagen';
+      setFormError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsUploading(false);
     }

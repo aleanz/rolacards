@@ -89,6 +89,7 @@ export default function UsuariosPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('type', 'avatars');
 
       const response = await fetch('/api/upload', {
         method: 'POST',

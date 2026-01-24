@@ -150,6 +150,7 @@ export default function EventosPage() {
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
+      formDataUpload.append('type', 'events');
 
       const response = await fetch('/api/upload', {
         method: 'POST',
