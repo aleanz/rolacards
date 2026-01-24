@@ -86,11 +86,25 @@ export default function ProductDetailPage() {
       const response = await fetch('/api/settings');
       if (response.ok) {
         const data = await response.json();
-        setBankName(data.bank_name || '');
-        setAccountHolder(data.bank_account_holder || '');
-        setClabe(data.bank_clabe || '');
-        setAccountNumber(data.bank_account_number || '');
-        setBankReference(data.bank_reference || '');
+        // Si es un array, convertirlo a objeto
+        if (Array.isArray(data)) {
+          const settingsObj = data.reduce((acc, setting) => {
+            acc[setting.key] = setting.value;
+            return acc;
+          }, {} as Record<string, string>);
+          setBankName(settingsObj.bank_name || '');
+          setAccountHolder(settingsObj.bank_account_holder || '');
+          setClabe(settingsObj.bank_clabe || '');
+          setAccountNumber(settingsObj.bank_account_number || '');
+          setBankReference(settingsObj.bank_reference || '');
+        } else {
+          // Si ya es un objeto
+          setBankName(data.bank_name || '');
+          setAccountHolder(data.bank_account_holder || '');
+          setClabe(data.bank_clabe || '');
+          setAccountNumber(data.bank_account_number || '');
+          setBankReference(data.bank_reference || '');
+        }
       }
     } catch (error) {
       console.error('Error fetching bank settings:', error);
