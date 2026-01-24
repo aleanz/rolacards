@@ -19,6 +19,7 @@ import {
   BarChart3,
   FileCheck,
   ShoppingBag,
+  Settings,
 } from 'lucide-react';
 
 const menuItems = [
@@ -74,6 +75,11 @@ const menuItems = [
     name: 'Buscador de Cartas',
     href: '/admin/buscador-cartas',
     icon: CreditCard,
+  },
+  {
+    name: 'Configuración',
+    href: '/admin/configuracion',
+    icon: Settings,
   },
 ];
 

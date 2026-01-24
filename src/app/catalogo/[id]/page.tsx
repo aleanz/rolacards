@@ -50,9 +50,17 @@ export default function ProductDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Bank settings
+  const [bankName, setBankName] = useState('');
+  const [accountHolder, setAccountHolder] = useState('');
+  const [clabe, setClabe] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [bankReference, setBankReference] = useState('');
+
   useEffect(() => {
     if (params.id) {
       fetchProduct();
+      fetchBankSettings();
     }
   }, [params.id]);
 
@@ -70,6 +78,22 @@ export default function ProductDetailPage() {
       router.push('/catalogo');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchBankSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        const data = await response.json();
+        setBankName(data.bank_name || '');
+        setAccountHolder(data.bank_account_holder || '');
+        setClabe(data.bank_clabe || '');
+        setAccountNumber(data.bank_account_number || '');
+        setBankReference(data.bank_reference || '');
+      }
+    } catch (error) {
+      console.error('Error fetching bank settings:', error);
     }
   };
 
@@ -290,10 +314,49 @@ export default function ProductDetailPage() {
                   <form onSubmit={handleSubmitOrder} className="card p-6 space-y-6">
                     <div>
                       <h2 className="text-xl font-bold text-white mb-4">Realizar compra</h2>
-                      <p className="text-gray-400 text-sm mb-4">
+                      <p className="text-gray-400 text-sm">
                         El pago debe realizarse mediante transferencia bancaria. Por favor, adjunta el comprobante de pago.
                       </p>
                     </div>
+
+                    {/* Bank Information */}
+                    {clabe && (
+                      <div className="bg-rola-gold/10 border border-rola-gold/30 rounded-lg p-4 space-y-3">
+                        <h3 className="text-rola-gold font-semibold text-sm mb-3">
+                          Datos para transferencia:
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                          {bankName && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Banco:</span>
+                              <span className="text-white font-medium">{bankName}</span>
+                            </div>
+                          )}
+                          {accountHolder && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Titular:</span>
+                              <span className="text-white font-medium">{accountHolder}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center pt-2 border-t border-rola-gold/20">
+                            <span className="text-gray-400">CLABE:</span>
+                            <span className="text-rola-gold font-bold font-mono text-base">{clabe}</span>
+                          </div>
+                          {accountNumber && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Cuenta:</span>
+                              <span className="text-white font-mono">{accountNumber}</span>
+                            </div>
+                          )}
+                          {bankReference && (
+                            <div className="pt-2 border-t border-rola-gold/20">
+                              <span className="text-gray-400 text-xs">Referencia:</span>
+                              <p className="text-white mt-1">{bankReference}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {!session && (
                       <div className="bg-rola-red/10 border border-rola-red rounded-lg p-4 flex items-start gap-3">
