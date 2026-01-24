@@ -180,7 +180,8 @@ export default function ProductDetailPage() {
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
-        throw new Error(errorData.error || 'Error al crear la orden');
+        console.error('Error response:', errorData);
+        throw new Error(errorData.error || errorData.details || 'Error al crear la orden');
       }
 
       setSuccess(true);
@@ -192,6 +193,7 @@ export default function ProductDetailPage() {
         router.push('/cliente/ordenes');
       }, 3000);
     } catch (err) {
+      console.error('Error completo:', err);
       setError(err instanceof Error ? err.message : 'Error al procesar la orden');
     } finally {
       setIsSubmitting(false);
