@@ -59,7 +59,14 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ deck });
+    // Transform response to match frontend expected structure
+    const transformedDeck = {
+      ...deck,
+      cards: deck.DeckCard || [],
+      user: deck.User,
+    };
+
+    return NextResponse.json({ deck: transformedDeck });
   } catch (error) {
     console.error('Error fetching deck:', error);
     return NextResponse.json(
