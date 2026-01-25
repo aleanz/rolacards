@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
 // Force dynamic rendering
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
         type,
         format,
         genesysPointsLimit: genesysPointsLimit ? parseInt(genesysPointsLimit) : null,
-        entryFee: entryFee ? parseFloat(entryFee) : null,
+        entryFee: entryFee ? new Prisma.Decimal(entryFee) : null,
         maxPlayers: maxPlayers ? parseInt(maxPlayers) : null,
         prizeInfo,
         imageUrl,
@@ -218,7 +219,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(event, { status: 201 });
   } catch (error) {
-    console.error('Error creating event:', error);
-    return NextResponse.json({ error: 'Error al crear evento' }, { status: 500 });
+    console.error('[API /api/events POST] Error creating event:', error);
+    console.error('[API /api/events POST] Error details:', error instanceof Error ? error.message : 'Unknown');
+    console.error('[API /api/events POST] Error stack:', error instanceof Error ? error.stack : 'Unknown');
+    return NextResponse.json({
+      error: 'Error al crear evento',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    }, { status: 500 });
   }
 }
