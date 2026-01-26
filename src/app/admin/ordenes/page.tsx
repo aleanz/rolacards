@@ -401,7 +401,7 @@ export default function AdminOrdersPage() {
       {/* Modal */}
       {showModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-rola-dark-light border border-rola-gray rounded-lg p-6 max-w-md w-full">
+          <div className="bg-rola-dark border border-rola-gray rounded-lg p-6 max-w-md w-full">
             <h2 className="text-xl font-bold text-white mb-4">
               {modalAction === 'approve' ? 'Aprobar Orden' : 'Rechazar Orden'}
             </h2>
