@@ -71,7 +71,7 @@ export default function AdminOrdersPage() {
   const { data: session, status: sessionStatus } = useSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('PENDING');
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -85,14 +85,11 @@ export default function AdminOrdersPage() {
     } else if (sessionStatus === 'authenticated') {
       fetchOrders();
     }
-  }, [sessionStatus, selectedStatus]);
+  }, [sessionStatus]);
 
   const fetchOrders = async () => {
     try {
-      const params = new URLSearchParams();
-      if (selectedStatus) params.append('status', selectedStatus);
-
-      const response = await fetch(`/api/orders?${params.toString()}`);
+      const response = await fetch('/api/orders');
       if (response.ok) {
         const data = await response.json();
         setOrders(data);
@@ -150,6 +147,8 @@ export default function AdminOrdersPage() {
   };
 
   const filteredOrders = orders.filter((order) => {
+    const matchesStatus = order.status === selectedStatus;
+
     const matchesSearch =
       searchTerm === '' ||
       order.orderNumber.toString().includes(searchTerm) ||
@@ -157,7 +156,7 @@ export default function AdminOrdersPage() {
       order.User.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.product?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch;
+    return matchesStatus && matchesSearch;
   });
 
   const formatDate = (date: string) => {
@@ -209,16 +208,6 @@ export default function AdminOrdersPage() {
 
         {/* Status Filters */}
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedStatus('')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              selectedStatus === ''
-                ? 'bg-rola-gold text-rola-dark font-semibold'
-                : 'bg-rola-gray/50 text-gray-400 hover:text-white'
-            }`}
-          >
-            Todas ({orders.length})
-          </button>
           {Object.entries(statusConfig).map(([key, config]) => {
             const count = orders.filter((o) => o.status === key).length;
             return (
