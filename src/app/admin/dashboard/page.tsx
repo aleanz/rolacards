@@ -97,9 +97,9 @@ export default function DashboardPage() {
       href: '/admin/inventario',
     },
     {
-      name: 'Usuarios Activos',
+      name: 'Usuarios Registrados',
       value: dashboardData.stats.users.value.toString(),
-      change: formatChange(dashboardData.stats.users.change),
+      change: `${dashboardData.stats.users.change}% verificados`,
       icon: Users,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
@@ -133,7 +133,11 @@ export default function DashboardPage() {
                 <div className={`w-12 h-12 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
                   <stat.icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
-                <span className={`text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                <span className={`text-sm font-medium ${
+                  stat.change.includes('verificados')
+                    ? 'text-purple-400'
+                    : stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'
+                }`}>
                   {stat.change}
                 </span>
               </div>

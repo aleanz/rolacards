@@ -79,37 +79,18 @@ export async function GET() {
       ? ((currentProductCount - lastMonthProducts) / lastMonthProducts) * 100
       : 0;
 
-    // Usuarios totales (STAFF y ADMIN que no son el sistema)
-    const activeUsers = await prisma.user.count({
-      where: {
-        role: {
-          in: ['ADMIN', 'STAFF'],
-        },
-      },
+    // Usuarios totales
+    const activeUsers = await prisma.user.count();
+
+    // Usuarios verificados y no verificados
+    const verifiedUsers = await prisma.user.count({
+      where: { emailVerified: true },
     });
 
-    // Usuarios creados este mes
-    const usersThisMonth = await prisma.user.count({
-      where: {
-        createdAt: {
-          gte: startOfMonth,
-        },
-      },
-    });
-
-    // Usuarios creados el mes anterior
-    const usersLastMonth = await prisma.user.count({
-      where: {
-        createdAt: {
-          gte: startOfLastMonth,
-          lte: endOfLastMonth,
-        },
-      },
-    });
-
-    const usersChange = usersLastMonth > 0
-      ? ((usersThisMonth - usersLastMonth) / usersLastMonth) * 100
-      : (usersThisMonth > 0 ? 100 : 0);
+    const unverifiedUsers = activeUsers - verifiedUsers;
+    const verifiedPercent = activeUsers > 0
+      ? Math.round((verifiedUsers / activeUsers) * 100)
+      : 0;
 
     // Eventos este mes
     const eventsThisMonth = await prisma.event.count({
@@ -213,7 +194,9 @@ export async function GET() {
         },
         users: {
           value: activeUsers,
-          change: usersChange,
+          change: verifiedPercent,
+          verified: verifiedUsers,
+          unverified: unverifiedUsers,
         },
         events: {
           value: eventsThisMonth,
