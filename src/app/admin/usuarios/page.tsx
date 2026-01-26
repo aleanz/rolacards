@@ -301,7 +301,7 @@ export default function UsuariosPage() {
               </div>
 
               {/* Actions */}
-              {isAdmin && session.user.id !== user.id && (
+              {isAdmin && (
                 <div className="flex gap-2 pt-4 border-t border-rola-gray/30">
                   <button
                     onClick={() => handleOpenModal(user)}
@@ -310,12 +310,14 @@ export default function UsuariosPage() {
                     <Edit className="w-4 h-4" />
                     Editar
                   </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="btn btn-ghost btn-sm text-red-400 hover:bg-red-500/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {session.user.id !== user.id && (
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      className="btn btn-ghost btn-sm text-red-400 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
