@@ -77,8 +77,9 @@ export function validateDeckCard(cardData: any, deckType: 'MAIN' | 'EXTRA' | 'SI
     }
   }
 
-  // Main Deck and Side Deck cannot contain Extra Deck monsters
-  if (deckType === 'MAIN' || deckType === 'SIDE') {
+  // Main Deck cannot contain Extra Deck monsters
+  // Side Deck can contain any card type (Main Deck or Extra Deck monsters)
+  if (deckType === 'MAIN') {
     if (isExtraDeck) {
       errors.push({
         field: 'deckType',
@@ -92,14 +93,13 @@ export function validateDeckCard(cardData: any, deckType: 'MAIN' | 'EXTRA' | 'SI
 }
 
 /**
- * Counts total copies of a card across Main Deck and Side Deck
+ * Counts total copies of a card across Main Deck, Extra Deck and Side Deck
  */
 export function countCardCopies(deck: Deck, cardId: number): number {
   let count = 0;
 
   for (const card of deck.cards) {
-    // Count copies in Main and Side deck (Extra deck doesn't count toward the 3-copy limit)
-    if (card.cardId === cardId && (card.deckType === 'MAIN' || card.deckType === 'SIDE')) {
+    if (card.cardId === cardId) {
       count += card.quantity;
     }
   }
@@ -192,14 +192,12 @@ export function validateDeck(deck: Deck): DeckValidationResult {
     errors.push(...cardErrors);
   }
 
-  // Validate card copy limits (max 3 copies per card in Main + Side)
+  // Validate card copy limits (max 3 copies per card across all decks)
   const cardCopyMap = new Map<number, number>();
 
   for (const card of deck.cards) {
-    if (card.deckType === 'MAIN' || card.deckType === 'SIDE') {
-      const currentCount = cardCopyMap.get(card.cardId) || 0;
-      cardCopyMap.set(card.cardId, currentCount + card.quantity);
-    }
+    const currentCount = cardCopyMap.get(card.cardId) || 0;
+    cardCopyMap.set(card.cardId, currentCount + card.quantity);
   }
 
   cardCopyMap.forEach((count, cardId) => {
@@ -207,7 +205,7 @@ export function validateDeck(deck: Deck): DeckValidationResult {
       const cardName = deck.cards.find(c => c.cardId === cardId)?.cardData?.name || `Carta ID ${cardId}`;
       errors.push({
         field: 'cardCopies',
-        message: `${cardName} tiene ${count} copias en Main + Side Deck. El máximo es 3 copias por carta.`,
+        message: `${cardName} tiene ${count} copias en el mazo. El máximo es 3 copias por carta.`,
         severity: 'error',
       });
     }
@@ -241,12 +239,7 @@ export function validateDeck(deck: Deck): DeckValidationResult {
  * Validates if adding a card would violate copy limit
  */
 export function canAddCard(deck: Deck, cardId: number, deckType: 'MAIN' | 'EXTRA' | 'SIDE'): boolean {
-  // Extra Deck doesn't have the 3-copy limit (each card is unique)
-  if (deckType === 'EXTRA') {
-    return true;
-  }
-
-  // Check current copies in Main + Side
+  // Check current copies across all decks (Main + Extra + Side)
   const currentCopies = countCardCopies(deck, cardId);
   return currentCopies < 3;
 }
