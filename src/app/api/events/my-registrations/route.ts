@@ -40,7 +40,14 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ registrations });
+    // Add lowercase aliases for frontend compatibility (perfil page uses lowercase)
+    const transformed = registrations.map((reg) => ({
+      ...reg,
+      event: reg.Event,
+      deck: reg.Deck,
+    }));
+
+    return NextResponse.json({ registrations: transformed });
   } catch (error) {
     console.error('Error fetching user registrations:', error);
     return NextResponse.json(
