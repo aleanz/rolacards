@@ -24,6 +24,55 @@ export async function GET(request: NextRequest) {
         emailVerified: true,
         createdAt: true,
         updatedAt: true,
+        Deck: {
+          select: {
+            id: true,
+            name: true,
+            format: true,
+            isActive: true,
+            createdAt: true,
+            DeckCard: {
+              select: {
+                id: true,
+                cardId: true,
+                quantity: true,
+                deckType: true,
+                cardData: true,
+              },
+              orderBy: {
+                cardId: 'asc',
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        EventRegistration: {
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            Event: {
+              select: {
+                id: true,
+                title: true,
+                date: true,
+                type: true,
+                format: true,
+              },
+            },
+            Deck: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',

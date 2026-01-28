@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useModal } from '@/hooks/useModal';
 import {
   Users,
   Calendar,
@@ -140,6 +141,8 @@ export default function SolicitudesPage() {
     setRejectionNote('');
     setPaymentProofFile(null);
   };
+
+  const { handleBackdropClick } = useModal({ isOpen: showModal, onClose: closeModal });
 
   const filteredRegistrations =
     filter === 'all'
@@ -396,7 +399,10 @@ export default function SolicitudesPage() {
 
       {/* Modal */}
       {showModal && selectedRegistration && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+          onClick={handleBackdropClick}
+        >
           <div className="card p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 className="font-display text-2xl font-bold text-white mb-6">
               Detalles de la Solicitud

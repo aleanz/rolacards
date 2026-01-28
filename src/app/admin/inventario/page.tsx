@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import { useModal } from '@/hooks/useModal';
 import {
   Package,
   Plus,
@@ -263,6 +264,8 @@ export default function InventarioPage() {
     setFormError('');
     resetForms();
   };
+
+  const { handleBackdropClick } = useModal({ isOpen: isModalOpen, onClose: handleCloseModal });
 
   const searchYGOProCards = async () => {
     if (!cardSearchTerm.trim()) return;
@@ -579,9 +582,12 @@ export default function InventarioPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/80 z-50 overflow-y-auto"
+          onClick={handleBackdropClick}
+        >
           <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="card p-6 max-w-3xl w-full my-8">
+            <div className="card p-6 max-w-3xl w-full my-8" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display text-2xl font-bold text-white">
                   {editingProduct ? 'Editar Producto' : `Agregar ${activeTab === 'SINGLE' ? 'Carta' : 'Producto Sellado'}`}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import { useModal } from '@/hooks/useModal';
 import {
   Calendar,
   Plus,
@@ -20,7 +21,9 @@ import {
   EyeOff,
   Star,
   AlertCircle,
+  ClipboardList,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/admin/PageHeader';
 
 interface Event {
@@ -99,6 +102,7 @@ const EVENT_FORMATS = [
 
 export default function EventosPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -221,6 +225,8 @@ export default function EventosPage() {
     setEditingEvent(null);
     setFormError('');
   };
+
+  const { handleBackdropClick } = useModal({ isOpen: isModalOpen, onClose: handleCloseModal });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -488,23 +494,31 @@ export default function EventosPage() {
                 )}
 
                 {/* Actions */}
-                {isAdmin && (
-                  <div className="flex gap-2 pt-4 border-t border-rola-gray/30">
-                    <button
-                      onClick={() => handleOpenModal(event)}
-                      className="flex-1 btn btn-ghost btn-sm"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      className="btn btn-ghost btn-sm text-red-400 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-2 pt-4 border-t border-rola-gray/30">
+                  <button
+                    onClick={() => router.push(`/admin/eventos/${event.id}`)}
+                    className="flex-1 btn btn-ghost btn-sm text-rola-gold"
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Ver Inscritos
+                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleOpenModal(event)}
+                        className="btn btn-ghost btn-sm"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="btn btn-ghost btn-sm text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -520,9 +534,12 @@ export default function EventosPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/50 z-50 overflow-y-auto"
+          onClick={handleBackdropClick}
+        >
           <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="card p-6 max-w-2xl w-full my-8">
+            <div className="card p-6 max-w-2xl w-full my-8" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-2xl font-bold text-white">
                 {editingEvent ? 'Editar Evento' : 'Nuevo Evento'}

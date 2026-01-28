@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useModal } from '@/hooks/useModal';
 import {
   Package,
   Clock,
@@ -78,6 +79,14 @@ export default function AdminOrdersPage() {
   const [rejectionNote, setRejectionNote] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalAction, setModalAction] = useState<'approve' | 'reject' | null>(null);
+
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    setSelectedOrder(null);
+    setRejectionNote('');
+  }, []);
+
+  const { handleBackdropClick } = useModal({ isOpen: showModal, onClose: closeModal });
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -389,7 +398,10 @@ export default function AdminOrdersPage() {
 
       {/* Modal */}
       {showModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
+          onClick={handleBackdropClick}
+        >
           <div className="bg-rola-dark border border-rola-gray rounded-lg p-6 max-w-md w-full">
             <h2 className="text-xl font-bold text-white mb-4">
               {modalAction === 'approve' ? 'Aprobar Orden' : 'Rechazar Orden'}
@@ -429,11 +441,7 @@ export default function AdminOrdersPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedOrder(null);
-                  setRejectionNote('');
-                }}
+                onClick={closeModal}
                 className="btn btn-ghost flex-1"
                 disabled={processingId !== null}
               >

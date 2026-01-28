@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
+import { useModal } from '@/hooks/useModal';
 import {
   Users as UsersIcon,
   Plus,
@@ -13,8 +14,51 @@ import {
   Save,
   Upload,
   User,
+  Layers,
+  Calendar,
+  CheckCircle,
+  Clock,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Eye,
 } from 'lucide-react';
+import Image from 'next/image';
 import PageHeader from '@/components/admin/PageHeader';
+
+interface DeckCard {
+  id: string;
+  cardId: number;
+  quantity: number;
+  deckType: 'MAIN' | 'EXTRA' | 'SIDE';
+  cardData: any;
+}
+
+interface Deck {
+  id: string;
+  name: string;
+  format: string | null;
+  isActive: boolean;
+  createdAt: string;
+  DeckCard?: DeckCard[];
+}
+
+interface EventRegistration {
+  id: string;
+  status: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+  createdAt: string;
+  Event: {
+    id: string;
+    title: string;
+    date: string;
+    type: string;
+    format: string | null;
+  };
+  Deck: {
+    id: string;
+    name: string;
+  };
+}
 
 interface User {
   id: string;
@@ -25,6 +69,8 @@ interface User {
   emailVerified: boolean;
   createdAt: string;
   updatedAt?: string;
+  Deck?: Deck[];
+  EventRegistration?: EventRegistration[];
 }
 
 interface UserFormData {
@@ -52,6 +98,67 @@ export default function UsuariosPage() {
   const [formError, setFormError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState('');
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
+  const [showDeckModal, setShowDeckModal] = useState(false);
+
+  const openDeckModal = (deck: Deck) => {
+    setSelectedDeck(deck);
+    setShowDeckModal(true);
+  };
+
+  const closeDeckModal = () => {
+    setShowDeckModal(false);
+    setSelectedDeck(null);
+  };
+
+  const { handleBackdropClick: handleDeckBackdropClick } = useModal({ isOpen: showDeckModal, onClose: closeDeckModal });
+
+  const toggleUserExpanded = (userId: string) => {
+    setExpandedUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'APROBADO':
+        return <CheckCircle className="w-3 h-3 text-green-400" />;
+      case 'PENDIENTE':
+        return <Clock className="w-3 h-3 text-yellow-400" />;
+      case 'RECHAZADO':
+        return <XCircle className="w-3 h-3 text-red-400" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'APROBADO':
+        return 'text-green-400';
+      case 'PENDIENTE':
+        return 'text-yellow-400';
+      case 'RECHAZADO':
+        return 'text-red-400';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('es-MX', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -142,6 +249,8 @@ export default function UsuariosPage() {
     setEditingUser(null);
     setFormError('');
   };
+
+  const { handleBackdropClick } = useModal({ isOpen: isModalOpen, onClose: handleCloseModal });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,6 +409,123 @@ export default function UsuariosPage() {
                 )}
               </div>
 
+              {/* Stats summary */}
+              {user.role === 'CLIENTE' && (
+                <div className="flex gap-4 mb-4 text-sm">
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Layers className="w-4 h-4" />
+                    <span>{user.Deck?.length || 0} mazos</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Calendar className="w-4 h-4" />
+                    <span>{user.EventRegistration?.length || 0} eventos</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Expandable section for decks and events */}
+              {user.role === 'CLIENTE' && ((user.Deck && user.Deck.length > 0) || (user.EventRegistration && user.EventRegistration.length > 0)) && (
+                <>
+                  <button
+                    onClick={() => toggleUserExpanded(user.id)}
+                    className="w-full flex items-center justify-between py-2 px-3 bg-rola-gray/30 rounded-lg text-sm text-gray-400 hover:bg-rola-gray/50 transition-colors mb-4"
+                  >
+                    <span>Ver mazos y eventos</span>
+                    {expandedUsers.has(user.id) ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  {expandedUsers.has(user.id) && (
+                    <div className="space-y-4 mb-4">
+                      {/* Decks Section */}
+                      {user.Deck && user.Deck.length > 0 && (
+                        <div className="p-3 bg-rola-gray/20 rounded-lg">
+                          <h4 className="text-xs font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                            <Layers className="w-3 h-3" />
+                            Mazos ({user.Deck.length})
+                          </h4>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {user.Deck.map((deck) => (
+                              <div
+                                key={deck.id}
+                                className="flex items-center justify-between text-xs py-1 px-2 bg-rola-darker/50 rounded group"
+                              >
+                                <button
+                                  onClick={() => openDeckModal(deck)}
+                                  className="text-white truncate flex-1 text-left hover:text-rola-gold transition-colors"
+                                  title="Ver cartas del mazo"
+                                >
+                                  {deck.name}
+                                </button>
+                                <div className="flex items-center gap-2">
+                                  {deck.format && (
+                                    <span className="text-gray-500 capitalize">{deck.format}</span>
+                                  )}
+                                  {!deck.isActive && (
+                                    <span className="text-red-400 text-[10px]">Inactivo</span>
+                                  )}
+                                  <button
+                                    onClick={() => openDeckModal(deck)}
+                                    className="p-1 text-gray-500 hover:text-rola-gold transition-colors opacity-0 group-hover:opacity-100"
+                                    title="Ver cartas del mazo"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Event Registrations Section */}
+                      {user.EventRegistration && user.EventRegistration.length > 0 && (
+                        <div className="p-3 bg-rola-gray/20 rounded-lg">
+                          <h4 className="text-xs font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                            <Calendar className="w-3 h-3" />
+                            Inscripciones a Eventos ({user.EventRegistration.length})
+                          </h4>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {user.EventRegistration.map((registration) => (
+                              <div
+                                key={registration.id}
+                                className="text-xs py-2 px-2 bg-rola-darker/50 rounded"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-white font-medium truncate">
+                                      {registration.Event.title}
+                                    </p>
+                                    <p className="text-gray-500 text-[10px]">
+                                      {formatDate(registration.Event.date)}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {getStatusIcon(registration.status)}
+                                    <span className={`text-[10px] ${getStatusColor(registration.status)}`}>
+                                      {registration.status}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mt-1 flex items-center justify-between text-[10px] text-gray-500">
+                                  <span>Mazo: {registration.Deck.name}</span>
+                                  {registration.Event.format && (
+                                    <span className="capitalize">{registration.Event.format}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
               {/* Actions */}
               {isAdmin && (
                 <div className="flex gap-2 pt-4 border-t border-rola-gray/30">
@@ -334,7 +560,10 @@ export default function UsuariosPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          onClick={handleBackdropClick}
+        >
           <div className="card p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-2xl font-bold text-white">
@@ -511,6 +740,199 @@ export default function UsuariosPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Deck View Modal */}
+      {showDeckModal && selectedDeck && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 overflow-y-auto"
+          onClick={handleDeckBackdropClick}
+        >
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="card p-6 max-w-4xl w-full my-8" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-white">
+                    {selectedDeck.name}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    {selectedDeck.format && (
+                      <span className="text-sm text-gray-400 capitalize">
+                        Formato: {selectedDeck.format}
+                      </span>
+                    )}
+                    {selectedDeck.DeckCard && (
+                      <span className="text-sm text-gray-500">
+                        ({selectedDeck.DeckCard.reduce((acc, c) => acc + c.quantity, 0)} cartas)
+                      </span>
+                    )}
+                    {!selectedDeck.isActive && (
+                      <span className="px-2 py-0.5 text-xs rounded bg-red-500/20 text-red-400">
+                        Inactivo
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={closeDeckModal}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {selectedDeck.DeckCard && selectedDeck.DeckCard.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Main Deck */}
+                  {(() => {
+                    const mainCards = selectedDeck.DeckCard.filter(c => c.deckType === 'MAIN');
+                    const mainCount = mainCards.reduce((acc, c) => acc + c.quantity, 0);
+                    if (mainCards.length === 0) return null;
+                    return (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                          <Layers className="w-4 h-4" />
+                          Main Deck ({mainCount})
+                        </h3>
+                        <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                          {mainCards.map((card) => (
+                            <div key={card.id} className="relative group" title={card.cardData?.name || 'Carta'}>
+                              <div className="aspect-[59/86] rounded overflow-hidden border border-rola-gray/30 hover:border-rola-gold/50 transition-colors">
+                                {card.cardData?.card_images?.[0]?.image_url_small ? (
+                                  <Image
+                                    src={card.cardData.card_images[0].image_url_small}
+                                    alt={card.cardData.name || 'Carta'}
+                                    fill
+                                    className="object-cover"
+                                    sizes="80px"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-xs text-gray-500">
+                                    ?
+                                  </div>
+                                )}
+                              </div>
+                              {card.quantity > 1 && (
+                                <div className="absolute -top-1 -right-1 bg-rola-gold text-black text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                  {card.quantity}
+                                </div>
+                              )}
+                              <p className="text-[9px] text-gray-400 truncate mt-1 text-center">
+                                {card.cardData?.name || 'Carta'}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Extra Deck */}
+                  {(() => {
+                    const extraCards = selectedDeck.DeckCard.filter(c => c.deckType === 'EXTRA');
+                    const extraCount = extraCards.reduce((acc, c) => acc + c.quantity, 0);
+                    if (extraCards.length === 0) return null;
+                    return (
+                      <div>
+                        <h3 className="text-sm font-semibold text-rola-purple mb-3 flex items-center gap-2">
+                          <Layers className="w-4 h-4" />
+                          Extra Deck ({extraCount})
+                        </h3>
+                        <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                          {extraCards.map((card) => (
+                            <div key={card.id} className="relative group" title={card.cardData?.name || 'Carta'}>
+                              <div className="aspect-[59/86] rounded overflow-hidden border border-rola-purple/30 hover:border-rola-purple/50 transition-colors">
+                                {card.cardData?.card_images?.[0]?.image_url_small ? (
+                                  <Image
+                                    src={card.cardData.card_images[0].image_url_small}
+                                    alt={card.cardData.name || 'Carta'}
+                                    fill
+                                    className="object-cover"
+                                    sizes="80px"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-xs text-gray-500">
+                                    ?
+                                  </div>
+                                )}
+                              </div>
+                              {card.quantity > 1 && (
+                                <div className="absolute -top-1 -right-1 bg-rola-purple text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                  {card.quantity}
+                                </div>
+                              )}
+                              <p className="text-[9px] text-gray-400 truncate mt-1 text-center">
+                                {card.cardData?.name || 'Carta'}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Side Deck */}
+                  {(() => {
+                    const sideCards = selectedDeck.DeckCard.filter(c => c.deckType === 'SIDE');
+                    const sideCount = sideCards.reduce((acc, c) => acc + c.quantity, 0);
+                    if (sideCards.length === 0) return null;
+                    return (
+                      <div>
+                        <h3 className="text-sm font-semibold text-rola-gold mb-3 flex items-center gap-2">
+                          <Layers className="w-4 h-4" />
+                          Side Deck ({sideCount})
+                        </h3>
+                        <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                          {sideCards.map((card) => (
+                            <div key={card.id} className="relative group" title={card.cardData?.name || 'Carta'}>
+                              <div className="aspect-[59/86] rounded overflow-hidden border border-rola-gold/30 hover:border-rola-gold/50 transition-colors">
+                                {card.cardData?.card_images?.[0]?.image_url_small ? (
+                                  <Image
+                                    src={card.cardData.card_images[0].image_url_small}
+                                    alt={card.cardData.name || 'Carta'}
+                                    fill
+                                    className="object-cover"
+                                    sizes="80px"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-xs text-gray-500">
+                                    ?
+                                  </div>
+                                )}
+                              </div>
+                              {card.quantity > 1 && (
+                                <div className="absolute -top-1 -right-1 bg-rola-gold text-black text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                  {card.quantity}
+                                </div>
+                              )}
+                              <p className="text-[9px] text-gray-400 truncate mt-1 text-center">
+                                {card.cardData?.name || 'Carta'}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Layers className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400">Este mazo no tiene cartas</p>
+                </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t border-rola-gray/30">
+                <button
+                  onClick={closeDeckModal}
+                  className="btn btn-ghost w-full"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
