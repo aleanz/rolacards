@@ -158,6 +158,16 @@ export default function LoginPage() {
                 </>
               )}
             </button>
+
+            {/* Forgot password link */}
+            <div className="text-center">
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm text-gray-400 hover:text-rola-gold transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </form>
 
           {/* Create account */}
@@ -171,6 +181,16 @@ export default function LoginPage() {
                 Regístrate
               </Link>
             </p>
+          </div>
+
+          {/* Resend verification */}
+          <div className="mt-3 text-center">
+            <Link
+              href="/auth/resend-verification"
+              className="text-sm text-gray-400 hover:text-rola-gold transition-colors"
+            >
+              ¿No recibiste el correo de verificación?
+            </Link>
           </div>
 
           {/* Back to home */}
