@@ -239,8 +239,7 @@ export default function SponsorsPage() {
     <div className="p-4 md:p-8">
       <PageHeader
         title="Sponsors"
-        subtitle="Gestiona los sponsors que se muestran en la página de inicio"
-        icon={<Handshake className="w-8 h-8 text-rola-gold" />}
+        description="Gestiona los sponsors que se muestran en la página de inicio"
         action={
           <button onClick={() => handleOpenModal()} className="btn btn-primary">
             <Plus className="w-4 h-4" />
