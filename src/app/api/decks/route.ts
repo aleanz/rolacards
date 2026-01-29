@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { validateDeck } from '@/lib/deck-validation';
 import { randomUUID } from 'crypto';
+import { verifyMobileToken } from '@/lib/mobile-auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -11,9 +12,13 @@ export const dynamic = 'force-dynamic';
 // GET /api/decks - List user's decks (or all decks for admin with ?userId=xxx)
 export async function GET(request: NextRequest) {
   try {
+    // Verificar sesión web o token móvil
     const session = await getServerSession(authOptions);
+    const mobileUser = !session ? await verifyMobileToken(request) : null;
 
-    if (!session?.user) {
+    const currentUser = session?.user || mobileUser;
+
+    if (!currentUser) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
@@ -24,10 +29,10 @@ export async function GET(request: NextRequest) {
     const userIdParam = searchParams.get('userId');
 
     // Determine which user's decks to fetch
-    let userId = session.user.id;
+    let userId = currentUser.id;
 
     // Admin can view other users' decks
-    if (userIdParam && (session.user.role === 'ADMIN' || session.user.role === 'STAFF')) {
+    if (userIdParam && (currentUser.role === 'ADMIN' || currentUser.role === 'STAFF')) {
       userId = userIdParam;
     }
 
@@ -66,9 +71,13 @@ export async function GET(request: NextRequest) {
 // POST /api/decks - Create new deck
 export async function POST(request: NextRequest) {
   try {
+    // Verificar sesión web o token móvil
     const session = await getServerSession(authOptions);
+    const mobileUser = !session ? await verifyMobileToken(request) : null;
 
-    if (!session?.user) {
+    const currentUser = session?.user || mobileUser;
+
+    if (!currentUser) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
@@ -103,7 +112,7 @@ export async function POST(request: NextRequest) {
         name,
         description,
         format,
-        userId: session.user.id,
+        userId: currentUser.id,
         updatedAt: new Date(),
         DeckCard: {
           create: cards.map((card: any) => ({

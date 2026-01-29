@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { verifyMobileToken } from '@/lib/mobile-auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -14,9 +15,12 @@ export async function GET(request: NextRequest) {
     console.log('[API /api/events] Starting request');
     console.log('[API /api/events] URL:', request.url);
 
+    // Verificar sesión web o token móvil
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-    const isAdmin = session?.user?.role === 'ADMIN';
+    const mobileUser = !session ? await verifyMobileToken(request) : null;
+
+    const userId = session?.user?.id || mobileUser?.id;
+    const isAdmin = session?.user?.role === 'ADMIN' || mobileUser?.role === 'ADMIN';
 
     const { searchParams } = new URL(request.url);
     const published = searchParams.get('published');
