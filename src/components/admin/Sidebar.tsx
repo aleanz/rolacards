@@ -20,6 +20,7 @@ import {
   FileCheck,
   ShoppingBag,
   Settings,
+  Handshake,
 } from 'lucide-react';
 
 const menuItems = [
@@ -75,6 +76,11 @@ const menuItems = [
     name: 'Buscador de Cartas',
     href: '/admin/buscador-cartas',
     icon: CreditCard,
+  },
+  {
+    name: 'Sponsors',
+    href: '/admin/sponsors',
+    icon: Handshake,
   },
   {
     name: 'Configuración',
