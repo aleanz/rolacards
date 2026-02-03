@@ -6,6 +6,7 @@ import { Search, Loader2, X, Filter, CheckCircle2, Ban, AlertCircle } from 'luci
 import type { YGOCard } from '@/lib/ygoprodeck';
 import type { DeckCard } from '@/lib/deck-validation';
 import { getBanlistStatus, getMaxCopies, getBanlistLabel, getBanlistColor, isCardLegalByDate, getDateIllegalReason, getGenesysPoints, type Format } from '@/lib/banlist';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface CardSearchProps {
   deckType: 'MAIN' | 'EXTRA' | 'SIDE';
@@ -626,9 +627,11 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
                       {format && (isDateIllegal || banlistStatus !== 'Unlimited') && (
                         <div className="absolute top-2 right-2 z-10">
                           {isDateIllegal && (
-                            <div className="bg-purple-500 text-white rounded-full p-1.5 shadow-lg" title={getDateIllegalReason(card, banlistFormat) || 'No existía en este formato'}>
-                              <AlertCircle className="w-4 h-4" />
-                            </div>
+                            <Tooltip content={getDateIllegalReason(card, banlistFormat) || 'No existía en este formato'}>
+                              <div className="bg-purple-500 text-white rounded-full p-1.5 shadow-lg cursor-help">
+                                <AlertCircle className="w-4 h-4" />
+                              </div>
+                            </Tooltip>
                           )}
                           {!isDateIllegal && banlistStatus === 'Forbidden' && (
                             <div className="bg-red-500 text-white rounded-full p-1.5 shadow-lg">

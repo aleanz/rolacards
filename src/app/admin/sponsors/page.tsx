@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import PageHeader from '@/components/admin/PageHeader';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface Sponsor {
   id: string;
@@ -306,17 +307,18 @@ export default function SponsorsPage() {
 
               {/* Actions */}
               <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => handleToggleActive(sponsor)}
-                  className="btn btn-ghost btn-sm"
-                  title={sponsor.active ? 'Desactivar' : 'Activar'}
-                >
-                  {sponsor.active ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
+                <Tooltip content={sponsor.active ? 'Desactivar' : 'Activar'}>
+                  <button
+                    onClick={() => handleToggleActive(sponsor)}
+                    className="btn btn-ghost btn-sm"
+                  >
+                    {sponsor.active ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </Tooltip>
                 <button
                   onClick={() => handleOpenModal(sponsor)}
                   className="btn btn-ghost btn-sm"

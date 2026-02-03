@@ -20,7 +20,8 @@ import {
   LogOut,
   ChevronDown,
   Layers,
-  ClipboardList
+  ClipboardList,
+  ShoppingBag as OrdersIcon
 } from 'lucide-react';
 
 const navigation = [
@@ -173,6 +174,14 @@ export default function Header() {
                         <ClipboardList className="w-4 h-4" />
                         Mis Inscripciones
                       </Link>
+                      <Link
+                        href="/cliente/ordenes"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-rola-gray/50 transition-colors"
+                      >
+                        <OrdersIcon className="w-4 h-4" />
+                        Mis Órdenes
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-rola-gray/50 transition-colors border-t border-rola-gray/50"
@@ -299,6 +308,14 @@ export default function Header() {
                   >
                     <ClipboardList className="w-5 h-5" />
                     <span className="text-sm font-medium">Mis Inscripciones</span>
+                  </Link>
+                  <Link
+                    href="/cliente/ordenes"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-rola-gray/50 rounded-lg transition-colors"
+                  >
+                    <OrdersIcon className="w-5 h-5" />
+                    <span className="text-sm font-medium">Mis Órdenes</span>
                   </Link>
                   <button
                     onClick={() => {

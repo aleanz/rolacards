@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import PageHeader from '@/components/admin/PageHeader';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface DeckCard {
   id: string;
@@ -453,13 +454,14 @@ export default function UsuariosPage() {
                                 key={deck.id}
                                 className="flex items-center justify-between text-xs py-1 px-2 bg-rola-darker/50 rounded group"
                               >
-                                <button
-                                  onClick={() => openDeckModal(deck)}
-                                  className="text-white truncate flex-1 text-left hover:text-rola-gold transition-colors"
-                                  title="Ver cartas del mazo"
-                                >
-                                  {deck.name}
-                                </button>
+                                <Tooltip content="Ver cartas del mazo">
+                                  <button
+                                    onClick={() => openDeckModal(deck)}
+                                    className="text-white truncate flex-1 text-left hover:text-rola-gold transition-colors"
+                                  >
+                                    {deck.name}
+                                  </button>
+                                </Tooltip>
                                 <div className="flex items-center gap-2">
                                   {deck.format && (
                                     <span className="text-gray-500 capitalize">{deck.format}</span>
@@ -467,13 +469,14 @@ export default function UsuariosPage() {
                                   {!deck.isActive && (
                                     <span className="text-red-400 text-[10px]">Inactivo</span>
                                   )}
-                                  <button
-                                    onClick={() => openDeckModal(deck)}
-                                    className="p-1 text-gray-500 hover:text-rola-gold transition-colors opacity-0 group-hover:opacity-100"
-                                    title="Ver cartas del mazo"
-                                  >
-                                    <Eye className="w-3 h-3" />
-                                  </button>
+                                  <Tooltip content="Ver cartas del mazo">
+                                    <button
+                                      onClick={() => openDeckModal(deck)}
+                                      className="p-1 text-gray-500 hover:text-rola-gold transition-colors opacity-0 group-hover:opacity-100"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                    </button>
+                                  </Tooltip>
                                 </div>
                               </div>
                             ))}

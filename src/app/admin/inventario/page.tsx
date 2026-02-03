@@ -19,6 +19,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface Product {
   id: string;
@@ -717,7 +718,6 @@ export default function InventarioPage() {
                           type="button"
                           onClick={generateSKU}
                           className="px-4 py-2 bg-rola-gold/20 text-rola-gold border border-rola-gold/50 rounded-lg hover:bg-rola-gold/30 transition-colors whitespace-nowrap"
-                          title="Generar SKU automático"
                         >
                           Generar
                         </button>
@@ -951,7 +951,6 @@ export default function InventarioPage() {
                           type="button"
                           onClick={generateSKU}
                           className="px-4 py-2 bg-rola-gold/20 text-rola-gold border border-rola-gold/50 rounded-lg hover:bg-rola-gold/30 transition-colors whitespace-nowrap"
-                          title="Generar SKU automático"
                         >
                           Generar
                         </button>

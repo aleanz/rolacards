@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Plus, Minus, X } from 'lucide-react';
 import type { DeckCard } from '@/lib/deck-validation';
 import { getBanlistStatus, getMaxCopies, getGenesysPoints, type Format } from '@/lib/banlist';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface CardInDeckProps {
   card: DeckCard;
@@ -125,15 +126,16 @@ export default function CardInDeck({
           {card.quantity}
         </span>
 
-        <button
-          onClick={handleIncrease}
-          disabled={card.quantity >= effectiveMax}
-          className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-rola-gold/20 text-gray-400 hover:text-rola-gold transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-          aria-label="Increase quantity"
-          title={card.quantity >= effectiveMax ? 'Límite alcanzado (banlist)' : 'Aumentar cantidad'}
-        >
-          <Plus className="w-3 h-3" />
-        </button>
+        <Tooltip content={card.quantity >= effectiveMax ? 'Límite alcanzado (banlist)' : 'Aumentar cantidad'}>
+          <button
+            onClick={handleIncrease}
+            disabled={card.quantity >= effectiveMax}
+            className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-rola-gold/20 text-gray-400 hover:text-rola-gold transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Increase quantity"
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        </Tooltip>
 
         <button
           onClick={() => onRemove(card.cardId)}

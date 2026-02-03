@@ -28,6 +28,7 @@ model Deck {
   User              User                @relation(fields: [userId], references: [id])
   DeckCard          DeckCard[]
   EventRegistration EventRegistration[]
+  TournamentPlayer  TournamentPlayer[]
 
   @@index([userId])
 }
@@ -75,24 +76,25 @@ model Event {
 }
 
 model EventRegistration {
-  id                String             @id
-  status            RegistrationStatus @default(PENDIENTE)
+  id                String              @id
+  status            RegistrationStatus  @default(PENDIENTE)
   rejectionNote     String?
   konamiId          String?
-  createdAt         DateTime           @default(now())
+  createdAt         DateTime            @default(now())
   updatedAt         DateTime
   userId            String
   eventId           String
   deckId            String
   paymentProof      String?
   paymentProofType  String?
-  paymentVerified   Boolean            @default(false)
+  paymentVerified   Boolean             @default(false)
   transferReference String?
   verifiedAt        DateTime?
   verifiedBy        String?
-  Deck              Deck               @relation(fields: [deckId], references: [id])
-  Event             Event              @relation(fields: [eventId], references: [id])
-  User              User               @relation(fields: [userId], references: [id])
+  Deck              Deck                @relation(fields: [deckId], references: [id])
+  Event             Event               @relation(fields: [eventId], references: [id])
+  User              User                @relation(fields: [userId], references: [id])
+  TournamentPlayer  TournamentPlayer?
 
   @@unique([userId, eventId])
   @@index([eventId, status])
@@ -274,26 +276,28 @@ model StoreSetting {
 }
 
 model User {
-  id                  String              @id
-  email               String              @unique
-  password            String
-  name                String
-  role                Role                @default(STAFF)
-  avatar              String?
-  emailVerified       Boolean             @default(false)
-  verificationToken   String?             @unique
-  resetPasswordToken  String?             @unique
+  id                   String              @id
+  email                String              @unique
+  password             String
+  name                 String
+  role                 Role                @default(STAFF)
+  avatar               String?
+  emailVerified        Boolean             @default(false)
+  verificationToken    String?             @unique
+  resetPasswordToken   String?             @unique
   resetPasswordExpires DateTime?
-  konamiId            String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime
-  Deck                Deck[]
-  Event               Event[]
-  EventRegistration   EventRegistration[]
-  News                News[]
-  Sale                Sale[]
-  Order               Order[]
-  OrderApprovals      Order[]             @relation("OrderApprovals")
+  konamiId             String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime
+  Deck                 Deck[]
+  Event                Event[]
+  EventRegistration    EventRegistration[]
+  News                 News[]
+  Sale                 Sale[]
+  Order                Order[]
+  OrderApprovals       Order[]             @relation("OrderApprovals")
+  TournamentPlayer     TournamentPlayer[]
+  TournamentsCreated   Tournament[]
 }
 
 enum CardCondition {
@@ -389,4 +393,148 @@ enum StockMovement {
   ADJUSTMENT
   RETURN
   DAMAGE
+}
+
+// ==================== SISTEMA DE TORNEOS ====================
+
+model Tournament {
+  id                String              @id
+  name              String
+  slug              String              @unique
+  description       String?
+  format            String?             // avanzado, ocg, goat, edison, genesys
+  date              DateTime
+  location          String?
+  entryFee          Decimal?            @db.Decimal(10, 2)
+  maxPlayers        Int?
+  prizeInfo         String?
+  imageUrl          String?
+
+  // Estado del torneo
+  status            TournamentStatus    @default(REGISTRATION)
+  currentRound      Int                 @default(0)
+  totalRounds       Int                 @default(0)
+  roundTimeMinutes  Int                 @default(50)
+
+  // Configuración
+  tier              TournamentTier      @default(TIER_1)
+
+  // Metadata
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  creatorId         String
+
+  // Relaciones
+  Creator           User                @relation(fields: [creatorId], references: [id])
+  Participants      TournamentPlayer[]
+  Matches           TournamentMatch[]
+
+  @@index([date])
+  @@index([status])
+}
+
+model TournamentPlayer {
+  id                String              @id
+
+  // Puntuación
+  matchPoints       Int                 @default(0)
+  matchWins         Int                 @default(0)
+  matchLosses       Int                 @default(0)
+  matchDraws        Int                 @default(0)
+  gameWins          Int                 @default(0)
+  gameLosses        Int                 @default(0)
+
+  // Tiebreakers (se calculan dinámicamente pero se cachean)
+  opponentMatchWinPct   Float           @default(0)
+  gameWinPct            Float           @default(0)
+  opponentGameWinPct    Float           @default(0)
+
+  // Estado
+  isActive          Boolean             @default(true)
+  hasBye            Boolean             @default(false)
+  dropped           Boolean             @default(false)
+  droppedAtRound    Int?
+
+  // Seed inicial (para desempate final)
+  seed              Int                 @default(0)
+
+  // Datos del jugador externo (cuando no tiene cuenta en el sistema)
+  externalName      String?
+  externalKonamiId  String?
+
+  // Relaciones
+  tournamentId      String
+  userId            String?
+  deckId            String?
+  registrationId    String?             @unique
+
+  Tournament        Tournament          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  User              User?               @relation(fields: [userId], references: [id])
+  Deck              Deck?               @relation(fields: [deckId], references: [id])
+  Registration      EventRegistration?  @relation(fields: [registrationId], references: [id])
+
+  MatchesAsPlayer1  TournamentMatch[]   @relation("Player1Matches")
+  MatchesAsPlayer2  TournamentMatch[]   @relation("Player2Matches")
+  MatchesAsWinner   TournamentMatch[]   @relation("WinnerMatches")
+
+  @@unique([tournamentId, externalKonamiId])
+  @@index([tournamentId, userId])
+  @@index([tournamentId])
+  @@index([matchPoints])
+}
+
+model TournamentMatch {
+  id                String              @id
+  round             Int
+  table             Int                 @default(1)
+
+  // Resultado
+  player1Wins       Int                 @default(0)
+  player2Wins       Int                 @default(0)
+  draws             Int                 @default(0)
+
+  // Estado
+  status            MatchStatus         @default(PENDING)
+  isBye             Boolean             @default(false)
+
+  // Tiempos
+  startedAt         DateTime?
+  finishedAt        DateTime?
+
+  // Relaciones
+  tournamentId      String
+  player1Id         String?
+  player2Id         String?
+  winnerId          String?
+
+  Tournament        Tournament          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  Player1           TournamentPlayer?   @relation("Player1Matches", fields: [player1Id], references: [id])
+  Player2           TournamentPlayer?   @relation("Player2Matches", fields: [player2Id], references: [id])
+  Winner            TournamentPlayer?   @relation("WinnerMatches", fields: [winnerId], references: [id])
+
+  @@index([tournamentId, round])
+  @@index([status])
+}
+
+enum TournamentStatus {
+  REGISTRATION      // Inscripciones abiertas
+  READY             // Listo para iniciar
+  IN_PROGRESS       // Rondas suizas en curso
+  TOP_CUT           // Eliminación directa
+  FINISHED          // Torneo terminado
+  CANCELLED         // Cancelado
+}
+
+enum TournamentTier {
+  TIER_1            // Locals (4-8: 3 rondas, etc.)
+  TIER_2            // Regionales
+  TIER_3            // YCS/WCQ
+  TIER_4            // Mundiales
+}
+
+enum MatchStatus {
+  PENDING           // Sin iniciar
+  IN_PROGRESS       // En curso
+  FINISHED          // Terminada
+  NO_SHOW           // No se presentó
 }

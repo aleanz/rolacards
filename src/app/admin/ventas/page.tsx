@@ -19,6 +19,7 @@ import {
   Package,
 } from 'lucide-react';
 import PageHeader from '@/components/admin/PageHeader';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface Product {
   id: string;
@@ -717,13 +718,14 @@ export default function VentasPage() {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => downloadPDF(sale.id)}
-                              className="p-2 text-rola-gold hover:bg-rola-gray rounded transition-colors"
-                              title="Descargar PDF"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
+                            <Tooltip content="Descargar PDF">
+                              <button
+                                onClick={() => downloadPDF(sale.id)}
+                                className="p-2 text-rola-gold hover:bg-rola-gray rounded transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            </Tooltip>
                           </div>
                         </td>
                       </tr>
