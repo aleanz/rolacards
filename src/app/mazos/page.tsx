@@ -5,8 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { Plus, Eye, Edit, Trash2, Loader2, Calendar, Download } from 'lucide-react';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { Plus, Eye, Edit, Trash2, Loader2, Calendar } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
@@ -28,7 +27,6 @@ export default function MazosPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -81,43 +79,6 @@ export default function MazosPage() {
       success: (msg) => msg as string,
       error: (err) => err as string,
     });
-  };
-
-  const handleExportYDK = async (deckId: string, deckName: string) => {
-    setExportingId(deckId);
-    try {
-      const response = await fetch(`/api/decks/${deckId}/export`);
-
-      if (!response.ok) {
-        throw new Error('Error al exportar');
-      }
-
-      // Get filename from Content-Disposition header
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `${deckName}.ydk`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="(.+)"/);
-        if (match) filename = match[1];
-      }
-
-      // Download the file
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success('Mazo exportado para EDOPro');
-    } catch (error) {
-      console.error('Error exporting deck:', error);
-      toast.error('Error al exportar el mazo');
-    } finally {
-      setExportingId(null);
-    }
   };
 
   if (status === 'loading' || isLoading) {
@@ -206,19 +167,6 @@ export default function MazosPage() {
                       <Edit className="w-4 h-4" />
                       Editar
                     </Link>
-                    <Tooltip content="Exportar para EDOPro">
-                      <button
-                        onClick={() => handleExportYDK(deck.id, deck.name)}
-                        disabled={exportingId === deck.id}
-                        className="btn btn-sm btn-outline text-green-400 hover:bg-green-500/10 hover:border-green-500/30"
-                      >
-                        {exportingId === deck.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Download className="w-4 h-4" />
-                        )}
-                      </button>
-                    </Tooltip>
                     <button
                       onClick={() => handleDelete(deck.id)}
                       disabled={deletingId === deck.id}

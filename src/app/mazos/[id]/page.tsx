@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Loader2, Calendar, Download } from 'lucide-react';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { ArrowLeft, Edit, Trash2, Loader2, Calendar } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { countCardsByType } from '@/lib/deck-validation';
@@ -40,7 +39,6 @@ export default function DeckViewPage({ params }: { params: { id: string } }) {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -96,43 +94,6 @@ export default function DeckViewPage({ params }: { params: { id: string } }) {
       success: (msg) => msg as string,
       error: (err) => err as string,
     });
-  };
-
-  const handleExportYDK = async () => {
-    setIsExporting(true);
-    try {
-      const response = await fetch(`/api/decks/${params.id}/export`);
-
-      if (!response.ok) {
-        throw new Error('Error al exportar');
-      }
-
-      // Get filename from Content-Disposition header
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `${deck?.name || 'deck'}.ydk`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="(.+)"/);
-        if (match) filename = match[1];
-      }
-
-      // Download the file
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success('Mazo exportado para EDOPro');
-    } catch (error) {
-      console.error('Error exporting deck:', error);
-      toast.error('Error al exportar el mazo');
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   if (status === 'loading' || isLoading) {
@@ -194,20 +155,6 @@ export default function DeckViewPage({ params }: { params: { id: string } }) {
               </div>
 
               <div className="flex items-center gap-2">
-                <Tooltip content="Exportar para usar en EDOPro/YGOPro">
-                  <button
-                    onClick={handleExportYDK}
-                    disabled={isExporting}
-                    className="btn btn-primary"
-                  >
-                    {isExporting ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Download className="w-5 h-5" />
-                    )}
-                    Exportar .ydk
-                  </button>
-                </Tooltip>
                 <Link
                   href={`/mazos/${params.id}/editar`}
                   className="btn btn-outline"
