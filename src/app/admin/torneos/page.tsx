@@ -101,7 +101,20 @@ export default function TorneosPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [events, setEvents] = useState<{ id: string; title: string; _count: { EventRegistration: number } }[]>([]);
+  const [events, setEvents] = useState<{
+    id: string;
+    title: string;
+    description: string | null;
+    date: string;
+    location: string | null;
+    format: string | null;
+    entryFee: string | null;
+    maxPlayers: number | null;
+    prizeInfo: string | null;
+    imageUrl: string | null;
+    EventRegistration?: any[];
+    _count?: { EventRegistration: number };
+  }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -183,6 +196,58 @@ export default function TorneosPage() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleEventSelect = (eventId: string) => {
+    if (!eventId) {
+      // Si deselecciona el evento, limpiar los campos
+      setFormData({
+        name: '',
+        description: '',
+        format: '',
+        date: '',
+        location: '',
+        entryFee: '',
+        maxPlayers: '',
+        prizeInfo: '',
+        imageUrl: '',
+        tier: 'TIER_1',
+        roundTimeMinutes: '50',
+        eventId: '',
+      });
+      return;
+    }
+
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return;
+
+    // Mapear formato del evento al formato del torneo
+    const formatMap: Record<string, string> = {
+      'avanzado': 'avanzado',
+      'tcg': 'avanzado',
+      'advanced': 'avanzado',
+      'ocg': 'ocg',
+      'goat': 'goat',
+      'edison': 'edison',
+      'genesys': 'genesys',
+    };
+    const mappedFormat = event.format
+      ? formatMap[event.format.toLowerCase()] || event.format.toLowerCase()
+      : '';
+
+    setFormData((prev) => ({
+      ...prev,
+      eventId,
+      name: event.title || '',
+      description: event.description || '',
+      format: mappedFormat,
+      date: event.date ? new Date(event.date).toISOString().slice(0, 16) : '',
+      location: event.location || '',
+      entryFee: event.entryFee ? String(event.entryFee) : '',
+      maxPlayers: event.maxPlayers ? String(event.maxPlayers) : '',
+      prizeInfo: event.prizeInfo || '',
+      imageUrl: event.imageUrl || '',
+    }));
   };
 
   const handleOpenModal = (tournament?: Tournament) => {
@@ -532,18 +597,18 @@ export default function TorneosPage() {
                     </label>
                     <select
                       value={formData.eventId}
-                      onChange={(e) => setFormData({ ...formData, eventId: e.target.value })}
+                      onChange={(e) => handleEventSelect(e.target.value)}
                       className="w-full px-4 py-2 bg-rola-gray/50 border border-rola-gray rounded-lg text-white focus:outline-none focus:border-rola-gold transition-colors"
                     >
                       <option value="">No importar</option>
                       {events.map((event) => (
                         <option key={event.id} value={event.id}>
-                          {event.title} ({event._count?.EventRegistration || 0} inscritos)
+                          {event.title} ({event.EventRegistration?.length || event._count?.EventRegistration || 0} inscritos)
                         </option>
                       ))}
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
-                      Importará los jugadores aprobados del evento
+                      Importará los jugadores aprobados del evento y llenará los campos automáticamente
                     </p>
                   </div>
                 )}
