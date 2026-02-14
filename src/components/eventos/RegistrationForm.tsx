@@ -23,6 +23,33 @@ interface RegistrationFormProps {
   userId: string;
 }
 
+// Mapeo de formatos de evento a formatos de deck builder
+const FORMAT_ALIASES: Record<string, string[]> = {
+  'tcg': ['tcg', 'avanzado', 'advanced'],
+  'ocg': ['ocg'],
+  'goat': ['goat'],
+  'edison': ['edison'],
+  'genesys': ['genesys'],
+};
+
+function formatsMatch(deckFormat: string | null, eventFormat: string | null): boolean {
+  if (!eventFormat || !deckFormat) return true;
+  const deckLower = deckFormat.toLowerCase();
+  const eventLower = eventFormat.toLowerCase();
+
+  // Coincidencia directa
+  if (deckLower === eventLower) return true;
+
+  // Buscar si ambos pertenecen al mismo grupo de aliases
+  for (const aliases of Object.values(FORMAT_ALIASES)) {
+    if (aliases.includes(deckLower) && aliases.includes(eventLower)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export default function RegistrationForm({
   eventId,
   eventFormat,
@@ -57,13 +84,9 @@ export default function RegistrationForm({
       const data = await response.json();
 
       // Filtrar mazos por formato si el evento tiene formato específico
-      // Comparación case-insensitive para mayor flexibilidad
-      const filteredDecks = eventFormat
-        ? data.decks.filter(
-            (deck: Deck) =>
-              deck.format?.toLowerCase() === eventFormat.toLowerCase() && deck.isActive
-          )
-        : data.decks.filter((deck: Deck) => deck.isActive);
+      const filteredDecks = data.decks.filter(
+        (deck: Deck) => deck.isActive && formatsMatch(deck.format, eventFormat)
+      );
 
       setDecks(filteredDecks);
     } catch (err) {
