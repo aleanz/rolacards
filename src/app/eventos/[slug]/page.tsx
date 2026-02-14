@@ -65,7 +65,10 @@ export default async function EventDetailPage({ params }: EventPageProps) {
 
   const eventDate = new Date(event.date);
   const endDate = event.endDate ? new Date(event.endDate) : null;
-  const isUpcoming = eventDate > new Date();
+  // Usar zona horaria de México para determinar si el evento es hoy o futuro
+  const mexicoToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+  const todayStart = new Date(mexicoToday + 'T00:00:00.000Z');
+  const isUpcoming = eventDate >= todayStart;
 
   // Verificar si el usuario ya está registrado
   const userRegistration = session?.user?.id
