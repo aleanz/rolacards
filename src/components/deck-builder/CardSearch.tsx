@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Search, Loader2, X, Filter, CheckCircle2, Ban, AlertCircle } from 'lucide-react';
+import { Search, Loader2, X, Filter, Ban, AlertCircle, Plus, Minus } from 'lucide-react';
 import type { YGOCard } from '@/lib/ygoprodeck';
 import type { DeckCard } from '@/lib/deck-validation';
 import { getBanlistStatus, getMaxCopies, getBanlistLabel, getBanlistColor, isCardLegalByDate, getDateIllegalReason, getGenesysPoints, type Format } from '@/lib/banlist';
@@ -13,6 +13,7 @@ interface CardSearchProps {
   format?: string;
   currentCards: DeckCard[];
   onCardSelect: (card: YGOCard) => void;
+  onCardRemove: (cardId: number) => void;
   onClose: () => void;
 }
 
@@ -85,7 +86,7 @@ const RACES = [
 
 const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-export default function CardSearch({ deckType, format, currentCards, onCardSelect, onClose }: CardSearchProps) {
+export default function CardSearch({ deckType, format, currentCards, onCardSelect, onCardRemove, onClose }: CardSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedAttribute, setSelectedAttribute] = useState('');
@@ -97,7 +98,14 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [addedCardNotification, setAddedCardNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'added' | 'removed'; name: string } | null>(null);
+  const notificationTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const showNotification = (type: 'added' | 'removed', name: string) => {
+    if (notificationTimer.current) clearTimeout(notificationTimer.current);
+    setNotification({ type, name });
+    notificationTimer.current = setTimeout(() => setNotification(null), 1500);
+  };
 
   useEffect(() => {
     fetchArchetypes();
@@ -139,24 +147,54 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
     try {
       let allCards: YGOCard[] = [];
 
-      // Si solo hay searchTerm sin otros filtros, hacer dos búsquedas paralelas
+      // Si solo hay searchTerm sin otros filtros, buscar por nombre y por descripción vía arquetipos
       if (searchTerm.trim() && !selectedType && !selectedAttribute && !selectedRace && !selectedLevel && !selectedArchetype) {
-        // Add format parameter for Genesys to get genesys_points
         const formatParam = format === 'Genesys' ? '&format=genesys' : '';
+        const term = searchTerm.trim().toLowerCase();
 
-        const [nameResults, descResults] = await Promise.all([
-          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes${formatParam}&fname=${encodeURIComponent(searchTerm)}`)
-            .then(r => r.ok ? r.json() : { data: [] })
-            .catch(() => ({ data: [] })),
-          fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes${formatParam}&desc=${encodeURIComponent(searchTerm)}`)
-            .then(r => r.ok ? r.json() : { data: [] })
-            .catch(() => ({ data: [] }))
-        ]);
+        // Paso 1: Buscar por nombre
+        const nameResults = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes${formatParam}&fname=${encodeURIComponent(searchTerm)}`)
+          .then(r => r.ok ? r.json() : { data: [] })
+          .catch(() => ({ data: [] }));
 
-        // Combinar resultados y eliminar duplicados
-        const allResults = [...(nameResults.data || []), ...(descResults.data || [])];
+        const nameCards: YGOCard[] = nameResults.data || [];
+
+        // Paso 2: Recolectar arquetipos relacionados
+        // - Arquetipos de las cartas encontradas por nombre
+        // - Arquetipos cuyo nombre contenga alguna palabra del término (min 4 chars)
+        const relatedArchetypes = new Set<string>();
+        for (const card of nameCards) {
+          if (card.archetype) relatedArchetypes.add(card.archetype);
+        }
+
+        const searchWords = term.split(/\s+/).filter(w => w.length >= 4);
+        for (const arch of archetypes) {
+          const archLower = arch.toLowerCase();
+          if (searchWords.some(word => archLower.includes(word))) {
+            relatedArchetypes.add(arch);
+          }
+        }
+
+        // Paso 3: Buscar cartas de arquetipos relacionados y filtrar por descripción
+        let descCards: YGOCard[] = [];
+        if (relatedArchetypes.size > 0 && relatedArchetypes.size <= 10) {
+          const archetypeFetches = Array.from(relatedArchetypes).map(arch =>
+            fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes${formatParam}&archetype=${encodeURIComponent(arch)}`)
+              .then(r => r.ok ? r.json() : { data: [] })
+              .catch(() => ({ data: [] }))
+          );
+          const archetypeResults = await Promise.all(archetypeFetches);
+          const archetypeCards = archetypeResults.flatMap(r => r.data || []);
+
+          descCards = archetypeCards.filter((card: YGOCard) =>
+            card.desc && card.desc.toLowerCase().includes(term)
+          );
+        }
+
+        // Combinar: primero las de nombre, luego las de descripción, sin duplicados
+        const combined = [...nameCards, ...descCards];
         const uniqueCards = Array.from(
-          new Map(allResults.map((card: YGOCard) => [card.id, card])).values()
+          new Map(combined.map((card: YGOCard) => [card.id, card])).values()
         );
         allCards = uniqueCards;
       } else {
@@ -342,15 +380,15 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
     }
 
     onCardSelect(card);
-    // Modal ya no se cierra automáticamente al seleccionar una carta
+    showNotification('added', card.name);
+  };
 
-    // Mostrar notificación de carta agregada
-    setAddedCardNotification(card.name);
+  const handleCardRemove = (card: YGOCard) => {
+    const currentCount = deckType === 'EXTRA' ? countExtraDeckCopies(card.id) : countCardCopies(card.id);
+    if (currentCount <= 0) return;
 
-    // Ocultar notificación después de 2 segundos
-    setTimeout(() => {
-      setAddedCardNotification(null);
-    }, 2000);
+    onCardRemove(card.id);
+    showNotification('removed', card.name);
   };
 
   const clearFilters = () => {
@@ -391,15 +429,12 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
       className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      {/* Notificación de carta agregada */}
-      {addedCardNotification && (
+      {/* Notificación */}
+      {notification && (
         <div className="fixed top-8 right-8 z-[60] animate-slide-in-right">
-          <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 border border-green-400">
-            <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
-            <div>
-              <p className="font-semibold">¡Carta agregada!</p>
-              <p className="text-sm text-green-100">{addedCardNotification}</p>
-            </div>
+          <div className={`${notification.type === 'added' ? 'bg-green-500 border-green-400' : 'bg-red-500 border-red-400'} text-white px-5 py-3 rounded-lg shadow-2xl flex items-center gap-2 border text-sm`}>
+            {notification.type === 'added' ? <Plus className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+            <span>{notification.name}</span>
           </div>
         </div>
       )}
@@ -604,90 +639,110 @@ export default function CardSearch({ deckType, format, currentCards, onCardSelec
                   const genesysPoints = format === 'Genesys' ? getGenesysPoints(card) : 0;
 
                   return (
-                    <button
+                    <div
                       key={card.id}
-                      onClick={() => handleCardClick(card)}
-                      disabled={isDisabled}
-                      className={`group relative aspect-[59/86] rounded-lg overflow-hidden border transition-colors ${
+                      className={`group relative rounded-lg overflow-hidden border transition-colors ${
                         isDisabled
-                          ? 'border-red-500/50 opacity-60 cursor-not-allowed'
+                          ? 'border-red-500/50 opacity-60'
                           : isAtLimit
                           ? 'border-orange-500/50 opacity-75'
                           : 'border-rola-gray/50 hover:border-rola-gold'
                       }`}
                     >
-                      <Image
-                        src={card.card_images[0].image_url}
-                        alt={card.name}
-                        fill
-                        className="object-cover"
-                      />
+                      {/* Card image */}
+                      <div className="relative aspect-[59/86]">
+                        <Image
+                          src={card.card_images[0].image_url}
+                          alt={card.name}
+                          fill
+                          className="object-cover"
+                        />
 
-                      {/* Banlist and Date indicator */}
-                      {format && (isDateIllegal || banlistStatus !== 'Unlimited') && (
-                        <div className="absolute top-2 right-2 z-10">
-                          {isDateIllegal && (
-                            <Tooltip content={getDateIllegalReason(card, banlistFormat) || 'No existía en este formato'}>
-                              <div className="bg-purple-500 text-white rounded-full p-1.5 shadow-lg cursor-help">
-                                <AlertCircle className="w-4 h-4" />
+                        {/* Banlist and Date indicator */}
+                        {format && (isDateIllegal || banlistStatus !== 'Unlimited') && (
+                          <div className="absolute top-2 right-2 z-10">
+                            {isDateIllegal && (
+                              <Tooltip content={getDateIllegalReason(card, banlistFormat) || 'No existía en este formato'}>
+                                <div className="bg-purple-500 text-white rounded-full p-1.5 shadow-lg cursor-help">
+                                  <AlertCircle className="w-4 h-4" />
+                                </div>
+                              </Tooltip>
+                            )}
+                            {!isDateIllegal && banlistStatus === 'Forbidden' && (
+                              <div className="bg-red-500 text-white rounded-full p-1.5 shadow-lg">
+                                <Ban className="w-4 h-4" />
                               </div>
-                            </Tooltip>
-                          )}
-                          {!isDateIllegal && banlistStatus === 'Forbidden' && (
-                            <div className="bg-red-500 text-white rounded-full p-1.5 shadow-lg">
-                              <Ban className="w-4 h-4" />
-                            </div>
-                          )}
-                          {!isDateIllegal && banlistStatus === 'Limited' && (
-                            <div className="bg-yellow-500 text-black rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm shadow-lg">
-                              1
-                            </div>
-                          )}
-                          {!isDateIllegal && banlistStatus === 'Semi-Limited' && (
-                            <div className="bg-orange-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm shadow-lg">
-                              2
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                            {!isDateIllegal && banlistStatus === 'Limited' && (
+                              <div className="bg-yellow-500 text-black rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm shadow-lg">
+                                1
+                              </div>
+                            )}
+                            {!isDateIllegal && banlistStatus === 'Semi-Limited' && (
+                              <div className="bg-orange-500 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-sm shadow-lg">
+                                2
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                      {/* Current count indicator */}
-                      {currentCount > 0 && (
-                        <div className="absolute top-2 left-2 z-10 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-lg">
-                          {currentCount}
-                        </div>
-                      )}
+                        {/* Genesys Points indicator */}
+                        {format === 'Genesys' && genesysPoints > 0 && (
+                          <div className="absolute bottom-2 left-2 z-10 bg-rola-gold text-black rounded-md px-2 py-1 font-bold text-xs shadow-lg">
+                            {genesysPoints} pts
+                          </div>
+                        )}
 
-                      {/* Genesys Points indicator */}
-                      {format === 'Genesys' && genesysPoints > 0 && (
-                        <div className="absolute bottom-2 left-2 z-10 bg-rola-gold text-black rounded-md px-2 py-1 font-bold text-xs shadow-lg">
-                          {genesysPoints} pts
-                        </div>
-                      )}
-
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                        <div className="w-full">
-                          <p className="text-xs font-medium text-white truncate">
-                            {card.name}
-                          </p>
-                          {format === 'Genesys' && genesysPoints > 0 && (
-                            <p className="text-[10px] text-rola-gold truncate mt-0.5">
-                              {genesysPoints} {genesysPoints === 1 ? 'punto' : 'puntos'} Genesys
+                        {/* Card name overlay on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                          <div className="w-full">
+                            <p className="text-xs font-medium text-white truncate">
+                              {card.name}
                             </p>
-                          )}
-                          {format && isDateIllegal && (
-                            <p className="text-[10px] text-purple-300 truncate mt-0.5">
-                              {getDateIllegalReason(card, banlistFormat)}
-                            </p>
-                          )}
-                          {format && !isDateIllegal && banlistStatus !== 'Unlimited' && format !== 'Genesys' && (
-                            <p className="text-[10px] text-gray-300 truncate mt-0.5">
-                              {getBanlistLabel(banlistStatus)}
-                            </p>
-                          )}
+                            {format === 'Genesys' && genesysPoints > 0 && (
+                              <p className="text-[10px] text-rola-gold truncate mt-0.5">
+                                {genesysPoints} {genesysPoints === 1 ? 'punto' : 'puntos'} Genesys
+                              </p>
+                            )}
+                            {format && isDateIllegal && (
+                              <p className="text-[10px] text-purple-300 truncate mt-0.5">
+                                {getDateIllegalReason(card, banlistFormat)}
+                              </p>
+                            )}
+                            {format && !isDateIllegal && banlistStatus !== 'Unlimited' && format !== 'Genesys' && (
+                              <p className="text-[10px] text-gray-300 truncate mt-0.5">
+                                {getBanlistLabel(banlistStatus)}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </button>
+
+                      {/* Add/Remove controls */}
+                      <div className="flex items-center justify-between bg-rola-black/95 border-t border-rola-gray/50">
+                        <button
+                          onClick={() => handleCardRemove(card)}
+                          disabled={currentCount <= 0}
+                          className="flex-1 flex items-center justify-center py-2 text-red-400 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Quitar carta"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className={`px-2 text-sm font-bold min-w-[2rem] text-center ${
+                          currentCount > 0 ? 'text-blue-400' : 'text-gray-500'
+                        }`}>
+                          {currentCount}
+                        </span>
+                        <button
+                          onClick={() => handleCardClick(card)}
+                          disabled={isDisabled || isAtLimit}
+                          className="flex-1 flex items-center justify-center py-2 text-green-400 hover:bg-green-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Agregar carta"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>

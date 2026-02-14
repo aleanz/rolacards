@@ -201,6 +201,22 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
     setCards(cards.filter(c => !(c.cardId === cardId && c.deckType === deckType)));
   };
 
+  const handleRemoveOneCard = (cardId: number) => {
+    if (!activeSection) return;
+    const existing = cards.find(c => c.cardId === cardId && c.deckType === activeSection);
+    if (!existing) return;
+
+    if (existing.quantity <= 1) {
+      setCards(cards.filter(c => !(c.cardId === cardId && c.deckType === activeSection)));
+    } else {
+      setCards(cards.map(c =>
+        c.cardId === cardId && c.deckType === activeSection
+          ? { ...c, quantity: c.quantity - 1 }
+          : c
+      ));
+    }
+  };
+
   const handleQuantityChange = (deckType: 'MAIN' | 'EXTRA' | 'SIDE') => (cardId: number, newQuantity: number) => {
     setCards(cards.map(c =>
       c.cardId === cardId && c.deckType === deckType
@@ -393,6 +409,7 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
           format={format}
           currentCards={cards}
           onCardSelect={handleAddCard}
+          onCardRemove={handleRemoveOneCard}
           onClose={() => setActiveSection(null)}
         />
       )}

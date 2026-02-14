@@ -62,6 +62,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             role: user.role,
             emailVerified: user.emailVerified,
+            image: user.avatar,
           };
         } catch (error) {
           console.error('❌ Auth error:', error);
@@ -79,6 +80,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.role = user.role;
         token.emailVerified = !!user.emailVerified;
+        token.picture = user.image;
       }
 
       // Actualizar token cuando se llama update() desde el cliente
