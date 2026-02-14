@@ -51,7 +51,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
-      <body className="min-h-screen bg-rola-black text-gray-100 antialiased">
+      <body className="min-h-screen bg-rola-black text-gray-100 antialiased overflow-x-hidden">
         <SessionProvider>
           {/* Noise overlay for texture */}
           <div className="noise-overlay" aria-hidden="true" />

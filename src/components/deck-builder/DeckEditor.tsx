@@ -251,7 +251,7 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0">
       {/* Deck Info */}
       <div className="card p-6">
         <h2 className="font-display text-xl font-bold text-white mb-4">
@@ -307,9 +307,9 @@ export default function DeckEditor({ deckId, initialDeck, onSave }: DeckEditorPr
       </div>
 
       {/* Deck Builder */}
-      <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 md:gap-6 min-w-0">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-4 md:space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6 min-w-0">
           {/* Main Deck */}
           <DeckSection
             type="MAIN"
