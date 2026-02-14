@@ -8,6 +8,26 @@ import { randomUUID } from 'crypto';
 import { calculateGenesysPoints, validateDeckAgainstBanlist } from '@/lib/banlist';
 import { sendRegistrationCreatedEmail, sendAdminNotificationEmail } from '@/lib/email';
 
+// Mapeo de formatos equivalentes (evento vs deck builder)
+const FORMAT_ALIASES: Record<string, string[]> = {
+  'tcg': ['tcg', 'avanzado', 'advanced'],
+  'ocg': ['ocg'],
+  'goat': ['goat'],
+  'edison': ['edison'],
+  'genesys': ['genesys'],
+};
+
+function formatsMatch(deckFormat: string | null, eventFormat: string | null): boolean {
+  if (!eventFormat || !deckFormat) return true;
+  const deckLower = deckFormat.toLowerCase();
+  const eventLower = eventFormat.toLowerCase();
+  if (deckLower === eventLower) return true;
+  for (const aliases of Object.values(FORMAT_ALIASES)) {
+    if (aliases.includes(deckLower) && aliases.includes(eventLower)) return true;
+  }
+  return false;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -45,9 +65,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Evento no encontrado' }, { status: 404 });
     }
 
-    // Verificar que el evento está vigente (no ha pasado)
-    const now = new Date();
-    if (event.date < now) {
+    // Verificar que el evento está vigente (no ha pasado, usando hora de México)
+    const mexicoToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+    const todayStart = new Date(mexicoToday + 'T00:00:00.000Z');
+    if (event.date < todayStart) {
       return NextResponse.json(
         { error: 'Este evento ya pasó. No se pueden realizar nuevas inscripciones.' },
         { status: 400 }
@@ -87,7 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verificar que el formato del mazo coincide con el del evento
-    if (event.format && deck.format !== event.format) {
+    if (event.format && !formatsMatch(deck.format, event.format)) {
       return NextResponse.json(
         {
           error: `El mazo debe ser del formato ${event.format}. Tu mazo es ${deck.format || 'sin formato'}`,
