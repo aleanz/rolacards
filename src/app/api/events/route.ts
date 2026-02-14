@@ -41,12 +41,14 @@ export async function GET(request: NextRequest) {
       where.featured = true;
     }
 
-    // Filtrar eventos próximos (fecha mayor o igual al inicio de hoy)
+    // Filtrar eventos próximos (fecha mayor o igual al inicio de hoy en hora de México)
     if (upcoming === 'true') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Obtener la fecha actual en zona horaria de México
+      const mexicoNow = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+      // mexicoNow es "YYYY-MM-DD", crear fecha al inicio de ese día en UTC
+      const todayStart = new Date(mexicoNow + 'T00:00:00.000Z');
       where.date = {
-        gte: today,
+        gte: todayStart,
       };
     }
 
