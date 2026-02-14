@@ -41,10 +41,12 @@ export async function GET(request: NextRequest) {
       where.featured = true;
     }
 
-    // Filtrar eventos próximos (fecha mayor o igual a hoy)
+    // Filtrar eventos próximos (fecha mayor o igual al inicio de hoy)
     if (upcoming === 'true') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       where.date = {
-        gte: new Date(),
+        gte: today,
       };
     }
 

@@ -116,13 +116,13 @@ export default function CardInDeck({
       <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
         <button
           onClick={handleDecrease}
-          className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center"
+          className="w-6 h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center"
           aria-label="Decrease quantity"
         >
           <Minus className="w-3 h-3" />
         </button>
 
-        <span className="text-sm font-medium text-white w-5 md:w-6 text-center">
+        <span className="text-sm font-medium text-white w-4 md:w-6 text-center">
           {card.quantity}
         </span>
 
@@ -130,7 +130,7 @@ export default function CardInDeck({
           <button
             onClick={handleIncrease}
             disabled={card.quantity >= effectiveMax}
-            className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-rola-gold/20 text-gray-400 hover:text-rola-gold transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-6 h-6 rounded bg-rola-gray/50 hover:bg-rola-gold/20 text-gray-400 hover:text-rola-gold transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Increase quantity"
           >
             <Plus className="w-3 h-3" />
@@ -139,7 +139,7 @@ export default function CardInDeck({
 
         <button
           onClick={() => onRemove(card.cardId)}
-          className="w-7 h-7 md:w-6 md:h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center ml-0.5 md:ml-1 md:opacity-0 md:group-hover:opacity-100"
+          className="w-6 h-6 rounded bg-rola-gray/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors items-center justify-center ml-0.5 md:ml-1 hidden md:flex md:opacity-0 md:group-hover:opacity-100"
           aria-label="Remove card"
         >
           <X className="w-3 h-3" />

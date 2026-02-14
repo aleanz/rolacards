@@ -46,6 +46,13 @@ function formatEventTime(date: Date) {
   }).format(date);
 }
 
+function isToday(date: Date) {
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+}
+
 export default function EventsSection() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,6 +145,7 @@ export default function EventsSection() {
             const eventDate = new Date(event.date);
             const typeInfo = eventTypeLabels[event.type as keyof typeof eventTypeLabels];
             const isFeaturedFirst = index === 0 && event.featured;
+            const eventIsToday = isToday(eventDate);
 
             return (
               <article
@@ -170,6 +178,11 @@ export default function EventsSection() {
                         <span className="badge badge-gold">
                           <Trophy className="w-3 h-3 mr-1" />
                           Destacado
+                        </span>
+                      )}
+                      {eventIsToday && (
+                        <span className="badge bg-green-500/20 text-green-400 border border-green-500/30 animate-pulse">
+                          HOY
                         </span>
                       )}
                     </div>
@@ -237,9 +250,16 @@ export default function EventsSection() {
                 ) : (
                   <div className="p-6">
                     {/* Badge */}
-                    <span className={cn('badge mb-4', typeInfo.color)}>
-                      {typeInfo.label}
-                    </span>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className={cn('badge', typeInfo.color)}>
+                        {typeInfo.label}
+                      </span>
+                      {eventIsToday && (
+                        <span className="badge bg-green-500/20 text-green-400 border border-green-500/30 animate-pulse">
+                          HOY
+                        </span>
+                      )}
+                    </div>
 
                     {/* Title */}
                     <h3 className="font-display text-xl font-bold text-white mb-4 group-hover:text-rola-gold transition-colors">

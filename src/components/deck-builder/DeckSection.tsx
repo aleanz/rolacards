@@ -55,7 +55,7 @@ export default function DeckSection({
   const isValid = type === 'MAIN' ? cardCount >= info.min && cardCount <= info.max : cardCount <= info.max;
 
   return (
-    <div className={`border rounded-lg p-3 md:p-4 ${info.bgColor}`}>
+    <div className={`border rounded-lg p-3 md:p-4 overflow-hidden ${info.bgColor}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="min-w-0 flex-1 pr-2">

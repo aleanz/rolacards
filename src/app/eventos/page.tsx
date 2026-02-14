@@ -49,6 +49,13 @@ function formatEventTime(date: Date) {
   }).format(date);
 }
 
+function isToday(date: Date) {
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+}
+
 const months = [
   { value: '', label: 'Todos los meses' },
   { value: '1', label: 'Enero' },
@@ -224,12 +231,13 @@ export default function EventosPage() {
                   const typeInfo =
                     eventTypeLabels[event.type as keyof typeof eventTypeLabels] ||
                     eventTypeLabels.ANNOUNCEMENT;
+                  const eventIsToday = isToday(eventDate);
 
                   return (
                     <Link
                       key={event.id}
                       href={`/eventos/${event.slug}`}
-                      className="card p-6 hover:border-rola-gold transition-all group block"
+                      className={`card p-6 hover:border-rola-gold transition-all group block ${eventIsToday ? 'border-l-4 border-l-green-500' : ''}`}
                     >
                       <div className="flex flex-col md:flex-row gap-6">
                         {/* Image */}
@@ -251,7 +259,14 @@ export default function EventosPage() {
                               <h3 className="font-display text-xl md:text-2xl font-bold text-white group-hover:text-rola-gold transition-colors mb-2">
                                 {event.title}
                               </h3>
-                              <span className={`badge ${typeInfo.color}`}>{typeInfo.label}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`badge ${typeInfo.color}`}>{typeInfo.label}</span>
+                                {eventIsToday && (
+                                  <span className="badge bg-green-500/20 text-green-400 border border-green-500/30 animate-pulse font-bold">
+                                    HOY
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             {event.featured && (
                               <Trophy className="w-6 h-6 text-rola-gold flex-shrink-0" />
