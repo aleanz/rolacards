@@ -1,3 +1,4 @@
+// Test commit - verificando conexión con GitHub
 import type { Metadata } from 'next';
 import './globals.css';
 import SessionProvider from '@/components/providers/SessionProvider';
