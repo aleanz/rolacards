@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://rolacards.com'),
   title: {
     default: 'Rola Cards | Tu tienda de cartas TCG',
     template: '%s | Rola Cards',
@@ -52,6 +53,32 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Store',
+              name: 'Rola Cards',
+              description: 'Tienda especializada en cartas coleccionables TCG. Torneos, eventos, cartas individuales y producto sellado.',
+              url: process.env.NEXTAUTH_URL || 'https://rolacards.com',
+              logo: `${process.env.NEXTAUTH_URL || 'https://rolacards.com'}/logo.png`,
+              priceRange: '$$',
+              servesCuisine: undefined,
+              hasOfferCatalog: {
+                '@type': 'OfferCatalog',
+                name: 'Cartas coleccionables TCG',
+                itemListElement: [
+                  { '@type': 'OfferCatalog', name: 'Yu-Gi-Oh!' },
+                  { '@type': 'OfferCatalog', name: 'Pokémon' },
+                  { '@type': 'OfferCatalog', name: 'Magic: The Gathering' },
+                ],
+              },
+            }),
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-rola-black text-gray-100 antialiased overflow-x-hidden">
         <SessionProvider>
           {/* Noise overlay for texture */}

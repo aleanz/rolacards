@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,6 +25,41 @@ import RegistrationForm from '@/components/eventos/RegistrationForm';
 interface EventPageProps {
   params: {
     slug: string;
+  };
+}
+
+export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
+  const event = await prisma.event.findUnique({
+    where: { slug: params.slug },
+    select: { title: true, description: true, imageUrl: true, date: true, location: true },
+  });
+
+  if (!event) {
+    return { title: 'Evento no encontrado' };
+  }
+
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://rolacards.com';
+
+  return {
+    title: event.title,
+    description: event.description || `Evento en Rola Cards: ${event.title}`,
+    openGraph: {
+      title: `${event.title} | Rola Cards`,
+      description: event.description || `Evento en Rola Cards: ${event.title}`,
+      type: 'article',
+      ...(event.imageUrl && {
+        images: [{ url: event.imageUrl, width: 1200, height: 630, alt: event.title }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title,
+      description: event.description || `Evento en Rola Cards: ${event.title}`,
+      ...(event.imageUrl && { images: [event.imageUrl] }),
+    },
+    alternates: {
+      canonical: `${baseUrl}/eventos/${params.slug}`,
+    },
   };
 }
 
@@ -80,8 +116,43 @@ export default async function EventDetailPage({ params }: EventPageProps) {
   const approvedRegistrations = event.EventRegistration.filter(reg => reg.status === 'APROBADO');
   const currentRegistrations = event.EventRegistration.length;
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    description: event.description || undefined,
+    startDate: eventDate.toISOString(),
+    ...(endDate && { endDate: endDate.toISOString() }),
+    ...(event.location && {
+      location: {
+        '@type': 'Place',
+        name: event.location,
+      },
+    }),
+    ...(event.imageUrl && { image: event.imageUrl }),
+    organizer: {
+      '@type': 'Organization',
+      name: 'Rola Cards',
+      url: process.env.NEXTAUTH_URL || 'https://rolacards.com',
+    },
+    ...(event.entryFee && Number(event.entryFee) > 0 && {
+      offers: {
+        '@type': 'Offer',
+        price: event.entryFee.toString(),
+        priceCurrency: 'MXN',
+        availability: approvedRegistrations.length >= (event.maxPlayers || Infinity)
+          ? 'https://schema.org/SoldOut'
+          : 'https://schema.org/InStock',
+      },
+    }),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <main className="min-h-screen pt-24 pb-20">
         <div className="container-custom">

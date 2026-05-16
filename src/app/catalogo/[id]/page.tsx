@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import {
@@ -243,12 +244,15 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Product Image */}
               <div className="card p-6">
-                <div className="aspect-[3/4] bg-rola-gray/30 rounded-lg overflow-hidden mb-4">
+                <div className="aspect-[3/4] bg-rola-gray/30 rounded-lg overflow-hidden mb-4 relative">
                   {product.imageUrl ? (
-                    <img
+                    <Image
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
+                      priority
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
