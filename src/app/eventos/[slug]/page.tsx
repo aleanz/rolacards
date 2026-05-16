@@ -16,6 +16,7 @@ import {
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import DOMPurify from 'isomorphic-dompurify';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import RegistrationForm from '@/components/eventos/RegistrationForm';
@@ -144,7 +145,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                         </h2>
                         <div
                           className="prose prose-invert max-w-none"
-                          dangerouslySetInnerHTML={{ __html: event.content }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(event.content) }}
                         />
                       </div>
                     )}
@@ -160,7 +161,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                             </h3>
                             <div
                               className="text-gray-300"
-                              dangerouslySetInnerHTML={{ __html: event.prizeInfo }}
+                              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(event.prizeInfo) }}
                             />
                           </div>
                         </div>

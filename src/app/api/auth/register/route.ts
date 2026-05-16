@@ -72,10 +72,7 @@ export async function POST(request: NextRequest) {
     const emailResult = await sendVerificationEmail(email, verificationToken, name);
 
     if (!emailResult.success) {
-      console.warn('⚠️ No se pudo enviar el email de verificación, pero el usuario fue creado');
-      // Fallback: mostrar el link en consola
-      console.log('Token de verificación:', verificationToken);
-      console.log('Link de verificación:', `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${verificationToken}`);
+      console.warn('Failed to send verification email for user:', user.id);
     }
 
     return NextResponse.json(
@@ -90,9 +87,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Register error:', error);
-    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('Register error:', error instanceof Error ? error.message : 'Unknown error');
 
     // Return more detailed error in development
     const isDevelopment = process.env.NODE_ENV === 'development';
