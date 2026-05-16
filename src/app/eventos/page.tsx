@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar, Clock, MapPin, Users, Trophy, Filter, Search, CheckCircle, XCircle, Clock as ClockIcon } from 'lucide-react';
 
 interface Event {
@@ -242,11 +243,13 @@ export default function EventosPage() {
                       <div className="flex flex-col md:flex-row gap-6">
                         {/* Image */}
                         {event.imageUrl && (
-                          <div className="md:w-48 h-48 flex-shrink-0">
-                            <img
+                          <div className="md:w-48 h-48 flex-shrink-0 relative overflow-hidden rounded-lg">
+                            <Image
                               src={event.imageUrl}
                               alt={event.title}
-                              className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              fill
+                              sizes="(max-width: 768px) 100vw, 192px"
+                              className="object-cover group-hover:scale-105 transition-transform"
                             />
                           </div>
                         )}

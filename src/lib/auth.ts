@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/login',
   },
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -21,14 +21,10 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-          console.log('🔐 Login attempt for:', credentials?.email);
-
           if (!credentials?.email || !credentials?.password) {
-            console.log('❌ Missing credentials');
             throw new Error('Credenciales inválidas');
           }
 
-          console.log('🔍 Searching user in database...');
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
@@ -36,26 +32,19 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user || !user.password) {
-            console.log('❌ User not found:', credentials.email);
             throw new Error('Usuario no encontrado');
           }
 
-          console.log('✅ User found:', user.email);
-          console.log('🔑 Verifying password...');
           const isPasswordValid = await compare(credentials.password, user.password);
 
           if (!isPasswordValid) {
-            console.log('❌ Invalid password for:', user.email);
             throw new Error('Contraseña incorrecta');
           }
 
-          // Verificar si es un cliente sin email verificado
           if (user.role === 'CLIENTE' && !user.emailVerified) {
-            console.log('⚠️ Cliente sin email verificado:', user.email);
             throw new Error('Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
           }
 
-          console.log('✅ Login successful for:', user.email);
           return {
             id: user.id,
             email: user.email,
@@ -65,7 +54,6 @@ export const authOptions: NextAuthOptions = {
             image: user.avatar,
           };
         } catch (error) {
-          console.error('❌ Auth error:', error);
           throw error;
         }
       },

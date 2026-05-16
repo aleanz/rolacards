@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { Search, X, Filter, Eye, ExternalLink } from 'lucide-react';
-import { useModal } from '@/hooks/useModal';
+import { Search, X, Filter } from 'lucide-react';
 
 interface Card {
   id: number;
@@ -113,7 +113,6 @@ const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 export default function BuscadorCartasPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [showFilters, setShowFilters] = useState(true);
 
   // Filtros
@@ -124,12 +123,6 @@ export default function BuscadorCartasPage() {
   const [selectedLevel, setSelectedLevel] = useState('');
   const [selectedArchetype, setSelectedArchetype] = useState('');
   const [archetypes, setArchetypes] = useState<string[]>([]);
-
-  const closeCardModal = useCallback(() => {
-    setSelectedCard(null);
-  }, []);
-
-  const { handleBackdropClick } = useModal({ isOpen: !!selectedCard, onClose: closeCardModal });
 
   useEffect(() => {
     fetchArchetypes();
@@ -401,9 +394,9 @@ export default function BuscadorCartasPage() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                   {cards.map((card) => (
-                    <div
+                    <Link
                       key={card.id}
-                      onClick={() => setSelectedCard(card)}
+                      href={`/cartas/${card.id}`}
                       className="card p-2 sm:p-3 cursor-pointer hover:border-rola-gold transition-all group"
                     >
                       <div className="relative">
@@ -434,7 +427,7 @@ export default function BuscadorCartasPage() {
                       </div>
                       <h3 className="text-white text-xs sm:text-sm font-medium truncate">{card.name}</h3>
                       <p className="text-gray-500 text-[10px] sm:text-xs truncate">{card.type}</p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -450,181 +443,6 @@ export default function BuscadorCartasPage() {
               </div>
             )}
 
-            {/* Card Detail Modal */}
-            {selectedCard && (
-              <div
-                className="fixed inset-0 bg-black/80 z-50 overflow-y-auto"
-                onClick={handleBackdropClick}
-              >
-                <div className="min-h-screen flex items-center justify-center p-4">
-                  <div className="card p-6 max-w-4xl w-full my-8" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex-1">
-                        <h2 className="font-display text-2xl font-bold text-white mb-2">
-                          {selectedCard.name}
-                        </h2>
-                        <div className="flex gap-2">
-                          {(() => {
-                            const availability = getRegionalAvailability(selectedCard);
-                            return (
-                              <>
-                                {availability.tcg && (
-                                  <span className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded">
-                                    TCG
-                                  </span>
-                                )}
-                                {availability.ocg && (
-                                  <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded">
-                                    OCG
-                                  </span>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setSelectedCard(null)}
-                        className="text-gray-400 hover:text-white transition-colors"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Image */}
-                      <div>
-                        <img
-                          src={selectedCard.card_images[0].image_url}
-                          alt={selectedCard.name}
-                          className="w-full rounded-lg"
-                        />
-                        {selectedCard.card_prices && selectedCard.card_prices[0] && (
-                          <div className="mt-4 p-4 bg-rola-gray/30 rounded-lg">
-                            <h3 className="text-white font-semibold mb-2">Precios estimados</h3>
-                            <div className="space-y-1 text-sm">
-                              {selectedCard.card_prices[0].cardmarket_price && (
-                                <p className="text-gray-400">
-                                  CardMarket:{' '}
-                                  <span className="text-rola-gold">
-                                    €{selectedCard.card_prices[0].cardmarket_price}
-                                  </span>
-                                </p>
-                              )}
-                              {selectedCard.card_prices[0].tcgplayer_price && (
-                                <p className="text-gray-400">
-                                  TCGPlayer:{' '}
-                                  <span className="text-rola-gold">
-                                    ${selectedCard.card_prices[0].tcgplayer_price}
-                                  </span>
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="space-y-4">
-                        {/* Regional Release Dates */}
-                        {selectedCard.misc_info && selectedCard.misc_info[0] && (
-                          <div className="p-3 bg-rola-gray/30 rounded-lg">
-                            <h3 className="text-white font-semibold mb-2">Fechas de Lanzamiento</h3>
-                            <div className="space-y-1 text-sm">
-                              {selectedCard.misc_info[0].tcg_date && (
-                                <p className="text-gray-400">
-                                  <span className="inline-block px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded mr-2">
-                                    TCG
-                                  </span>
-                                  {new Date(selectedCard.misc_info[0].tcg_date).toLocaleDateString('es-MX', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                  })}
-                                </p>
-                              )}
-                              {selectedCard.misc_info[0].ocg_date && (
-                                <p className="text-gray-400">
-                                  <span className="inline-block px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded mr-2">
-                                    OCG
-                                  </span>
-                                  {new Date(selectedCard.misc_info[0].ocg_date).toLocaleDateString('es-MX', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                  })}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        <div>
-                          <h3 className="text-gray-500 text-sm mb-1">Tipo</h3>
-                          <p className="text-white">{selectedCard.type}</p>
-                        </div>
-
-                        {selectedCard.attribute && (
-                          <div>
-                            <h3 className="text-gray-500 text-sm mb-1">Atributo</h3>
-                            <p className="text-white">{selectedCard.attribute}</p>
-                          </div>
-                        )}
-
-                        <div>
-                          <h3 className="text-gray-500 text-sm mb-1">Raza / Tipo</h3>
-                          <p className="text-white">{selectedCard.race}</p>
-                        </div>
-
-                        {selectedCard.level !== undefined && (
-                          <div>
-                            <h3 className="text-gray-500 text-sm mb-1">Nivel / Rank</h3>
-                            <p className="text-white">{selectedCard.level}</p>
-                          </div>
-                        )}
-
-                        {selectedCard.atk !== undefined && (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <h3 className="text-gray-500 text-sm mb-1">ATK</h3>
-                              <p className="text-white font-semibold">{selectedCard.atk}</p>
-                            </div>
-                            {selectedCard.def !== undefined && (
-                              <div>
-                                <h3 className="text-gray-500 text-sm mb-1">DEF</h3>
-                                <p className="text-white font-semibold">{selectedCard.def}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {selectedCard.archetype && (
-                          <div>
-                            <h3 className="text-gray-500 text-sm mb-1">Arquetipo</h3>
-                            <p className="text-white">{selectedCard.archetype}</p>
-                          </div>
-                        )}
-
-                        <div>
-                          <h3 className="text-gray-500 text-sm mb-1">Descripción</h3>
-                          <p className="text-gray-300 text-sm leading-relaxed">{selectedCard.desc}</p>
-                        </div>
-
-                        <a
-                          href={`https://ygoprodeck.com/card/${selectedCard.name.replace(/\s+/g, '-').toLowerCase()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline w-full"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Ver en YGOProDeck
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </main>
